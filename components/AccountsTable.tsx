@@ -63,7 +63,7 @@ export default async function AccountsTable({ className, accounts }: AccountsTab
                         </TableHeader>
                         <TableBody>
                             {accounts?.map((account) => (
-                                <TableRow>
+                                <TableRow key={account.id}>
                                     <TableCell>{account.name}</TableCell>
                                     <TableCell>{account.institution}</TableCell>
                                     <TableCell>{account.type}</TableCell>
