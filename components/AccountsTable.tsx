@@ -39,15 +39,9 @@ export default async function AccountsTable({ className, accounts }: AccountsTab
             <Card>
                 <CardHeader className='flex flex-row items-center justify-between'>
                     <CardTitle>Accounts</CardTitle>
-                    <Button
-                        asChild
-                        variant="secondary"
-                        size="icon"
-                        className="shrink-0"
-                    >
-                        <Link href="/budget/accounts/create">
-                            <Plus className="h-4 w-4" />
-                        </Link>
+=                        <Button variant="secondary" size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add
+                        <span className="sr-only">Add Account</span>
                     </Button>
                 </CardHeader>
                 <CardContent>
