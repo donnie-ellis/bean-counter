@@ -79,6 +79,7 @@ export default function CardholderManager({ cardholders, profiles, className = "
       setOpen(false)
     } catch (error) {
       toast.error("An error occurred.")
+      console.error(error);
     }
   }
 
@@ -90,6 +91,7 @@ export default function CardholderManager({ cardholders, profiles, className = "
       setDeleteTarget(null)
     } catch (error) {
       toast.error("An error occurred.")
+      console.error(error);
     }
   }
 

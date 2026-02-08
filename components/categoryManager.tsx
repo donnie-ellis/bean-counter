@@ -67,7 +67,6 @@ function buildTree(categories: Category[]): CategoryNode[] {
     return roots
 }
 
-
 export default function CategoryManager({ categories, className = "" }: { categories: Category[], className?: string }) {
     const tree = useMemo(() => buildTree(categories), [categories])
 
@@ -111,7 +110,7 @@ export default function CategoryManager({ categories, className = "" }: { catego
     }
 
     return (
-        <div className="">
+        <div className={className}>
             <Card className="">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Categories</CardTitle>

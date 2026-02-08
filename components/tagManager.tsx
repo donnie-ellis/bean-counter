@@ -60,6 +60,7 @@ export default function TagManager({ tags, className = "" }: { tags: Tag[], clas
             setOpen(false)
         } catch (error) {
             toast.error(`Failed to ${editing ? "update" : "create"} tag`)
+            console.error(error)
         }
     }
 
