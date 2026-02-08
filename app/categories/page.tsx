@@ -1,6 +1,6 @@
-// ./app/categories/page.tsx
+// ./app/budget/categories/page.tsx
 
-import CategoryAdmin from "@/components/categoryAdmin";
+import CategoryAdmin from "@/components/categoryManager";
 import { getCategories } from "@/app/categories/actions";
 export default async function Categories() {
 

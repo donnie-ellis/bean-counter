@@ -1,96 +1,129 @@
-// ./app/accounts/actions.ts
-
 'use server';
 import { createClient } from "@/lib/supabase/server";
-import { InsertAccountSchema, type CreateAccountForm } from "@/schemas";
-import { validateBudgetAccess } from "@/app/actions";
+import { Account, CreateAccountSchema, UpdateAccountSchema, type CreateAccountForm } from "@/schemas";
+import { getUser } from "@/lib/auth/getUser";
 
-export async function getAccounts(): Promise<{ data: any, error: any }> {
-    const accessValid = await validateBudgetAccess();
-    if (!accessValid) {
-        return { data: null, error: { message: "Access denied" } };
+// Select all accounts
+export async function getAccounts(): Promise<Account[]> {
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
     }
 
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('accounts')
-        .select('id, name, type, institution, credit_limit, is_active, created_at')
+        .select('id, name, type, institution, credit_limit, is_active, created_at, user_id')
         .order('created_at', { ascending: false });
 
-    if (error) {
+    if (error || !data) {
         console.error('Error retrieving accounts: ', error)
+        throw new Error('Failed to retrieve accounts');
     }
 
-    return { data, error };
+    return data;
 }
 // Select a single account
-export async function getAccount(id: string): Promise<{ data: any, error: any }> {
-    const accessValid = await validateBudgetAccess();
-    if (!accessValid) {
-        return { data: null, error: { message: "Access denied" } };
+export async function getAccount(id: string): Promise<Account> {
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
     }
 
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('accounts')
-        .select('id, name, type, institution, credit_limit, is_active, created_at')
+        .select('id, name, type, institution, credit_limit, is_active, created_at, user_id')
         .eq('id', id)
         .order('created_at', { ascending: false })
         .single();
 
     if (error) {
         console.error('Error retrieving accounts: ', error)
+        throw new Error('Failed to retrieve accounts');
     }
 
-    return { data, error };
+    return data;
 }
 
-export async function insertAccount(input: CreateAccountForm): Promise<{ data: any, error: any }> {
-    const accessValid = await validateBudgetAccess();
-    if (!accessValid) {
-        return { data: null, error: { message: "Access denied" } };
+// Insert a new account
+export async function insertAccount(input: CreateAccountForm): Promise<Account> {
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
     }
+
     const supabase = await createClient();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-        return { data: null, error: { message: "Not authenticated" } };
-    }
-
-    // Prepare data for insertion - convert empty strings to null
-    const dataToInsert = {
-        name: input.name,
-        type: input.type,
-        user_id: user.id,
-        institution: input.institution || null,
-        credit_limit: input.credit_limit ?? null,
-        is_active: input.is_active ?? true,
-    };
-
-    // Validate with full schema (includes user_id and refine rules)
-    const validatedData = InsertAccountSchema.safeParse(dataToInsert);
+    const validatedData = CreateAccountSchema.safeParse({ ...input, user_id: user.id });
 
     if (!validatedData.success) {
-        return {
-            data: null,
-            error: {
-                message: "Validation failed",
-                fields: validatedData.error.flatten().fieldErrors
-            }
-        };
+        console.error('Validation failed:', validatedData.error);
+        throw new Error('Validation failed');
     }
 
     const { data, error } = await supabase
         .from('accounts')
         .insert(validatedData.data)
+        .select()
+        .single();
 
     if (error) {
         console.error('Error inserting account:', error);
-        return { data: null, error: { message: error.message } };
+        throw new Error('Failed to insert account');
     }
 
-    return { data, error: null };
+    return data;
+}
+
+// Update an account
+export async function updateAccount(id: string, input: CreateAccountForm): Promise<Account> {
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
+    }
+
+    const supabase = await createClient();
+
+    const validatedData = UpdateAccountSchema.safeParse({ ...input, user_id: user.id });
+    if (!validatedData.success) {
+        console.error('Validation failed: ', validatedData.error);
+        throw new Error('Validation failed');
+    }
+
+    const { data, error } = await supabase
+        .from('accounts')
+        .update(validatedData.data)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating account:', error);
+        throw new Error('Failed to update account');
+    }
+
+    return data;
+}
+
+// Delete an account
+export async function deleteAccount(id: string): Promise<void> {
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting account:', error);
+        throw new Error('Failed to delete account');
+    }
+    return;
 }

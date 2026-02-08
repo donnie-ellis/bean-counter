@@ -4,9 +4,7 @@ import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
 import { Tag, UpdateTagForm, CreateTagForm, InsertTagSchema, UpdateTagSchema } from '@/schemas'
 
-/**
-* Fetch all tags
-*/
+// Get all tags
 export async function getTags(): Promise<Tag[]> {
   const supabase = await createClient();
   const user = await getUser();
@@ -26,9 +24,7 @@ export async function getTags(): Promise<Tag[]> {
   return data
 }
 
-/**
- * Fetch a tag
- */
+// Get a tag
 export async function getTag(id: string): Promise<Tag> {
   const supabase = await createClient();
   const user = await getUser();
@@ -49,10 +45,8 @@ export async function getTag(id: string): Promise<Tag> {
   return data
 }
 
-/**
-* Create a new tag
-*/
-export async function createTag(tag: CreateTagForm): Promise<Tag> {
+// Insert a tag
+export async function insertTag(tag: CreateTagForm): Promise<Tag> {
   const supabase = await createClient();
   const user = await getUser();
   if (!user) {
@@ -76,9 +70,7 @@ export async function createTag(tag: CreateTagForm): Promise<Tag> {
   return data;
 }
 
-/**
- * Update a tag
- */
+// Update a tag
 export async function updateTag(id: string, tag: UpdateTagForm): Promise<Tag> {
   const supabase = await createClient();
   const user = await getUser();
@@ -104,10 +96,8 @@ export async function updateTag(id: string, tag: UpdateTagForm): Promise<Tag> {
   return data;
 }
 
-/**
- * Delete a tag
- */
-export async function deleteTag(id: string) {
+// Delete a tag
+export async function deleteTag(id: string): Promise<void> {
   const supabase = await createClient();
   const user = await getUser();
   if (!user) {
@@ -117,4 +107,9 @@ export async function deleteTag(id: string) {
     .from('tags')
     .delete()
     .eq('id', id);
+  if (error) {
+    console.error('Error deleting tag:', error);
+    throw new Error('Failed to delete tag');
+  }
+  return;
 }

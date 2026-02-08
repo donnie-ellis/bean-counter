@@ -8,9 +8,8 @@ import UsersTable from './users_table'
 export default async function AdminUsersPage() {
     await requireRole('admin')
 
-    const {data: users, error} = await getUserProfiles()
+    const users = await getUserProfiles()
     if (!users) return <h1>Loading...</h1>
-    if (error) return <h1>Error: {error}</h1>
     
     return (
         <main className='mx-auto p-6 space-y-6'>

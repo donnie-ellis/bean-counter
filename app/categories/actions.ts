@@ -1,4 +1,4 @@
-// ./app/categories/actions.ts
+// ./app/budget/categories/actions.ts
 
 'use server'
 
@@ -97,7 +97,7 @@ export async function updateCategory(id: string, category: UpdateCategoryForm): 
 }
 
 // Delete a category
-export async function deleteCategory(id: string) {
+export async function deleteCategory(id: string): Promise<void> {
     const supabase = await createClient();
     const user = await getUser();
     const { data, error } = await supabase
@@ -109,5 +109,5 @@ export async function deleteCategory(id: string) {
         throw new Error('Failed to delete category');
     }
     revalidatePath('/budget/categories')
-    return null;
+    return;
 }

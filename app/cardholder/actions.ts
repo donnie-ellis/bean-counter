@@ -1,20 +1,16 @@
-// ./app/cardholder/actions.ts
-
 'use server'
 
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
-import { InsertCardholderSchema, UpdateCardholderSchema } from '@/schemas';
+import { Cardholder, InsertCardholderSchema, UpdateCardholderSchema } from '@/schemas';
 import { z } from 'zod';
 
-/**
- * Fetch all cardholders
- */
-export async function getCardholders() {
+// Get all cardholders
+export async function getCardholders(): Promise<Cardholder[]> {
   const supabase = await createClient();
   const user = await getUser();
   if (!user) {
-    return { data: null, error: { message: 'Not authenticated' } };
+    throw new Error('Not authenticated');
   }
 
   const { data, error } = await supabase
@@ -24,16 +20,14 @@ export async function getCardholders() {
 
   if (error) {
     console.error('Error fetching cardholders:', error);
-    return { data: null, error };
+    throw new Error('Failed to fetch cardholders');
   }
 
-  return { data, error: null };
+  return data;
 }
 
-/**
- * Create a new cardholder
- */
-export async function createCardholder(formData: { user_id: string; name: string }) {
+// Insert a cardholder
+export async function insertCardholder(formData: { user_id: string; name: string }) {
   const supabase = await createClient();
   const user = await getUser();
   if (!user) {
@@ -41,14 +35,14 @@ export async function createCardholder(formData: { user_id: string; name: string
   }
 
   // Validate input
-  const parseResult = InsertCardholderSchema.safeParse(formData);
-  if (!parseResult.success) {
-    throw new Error('Invalid input: ' + JSON.stringify(parseResult.error.format()));
+  const validatedData = InsertCardholderSchema.safeParse(formData);
+  if (!validatedData.success) {
+    throw new Error('Invalid input: ' + JSON.stringify(validatedData.error.format()));
   }
 
   const { data, error } = await supabase
     .from('cardholders')
-    .insert([parseResult.data])
+    .insert([validatedData.data])
     .select()
     .single();
 
@@ -60,9 +54,7 @@ export async function createCardholder(formData: { user_id: string; name: string
   return data;
 }
 
-/**
- * Update an existing cardholder
- */
+// Update a cardholder
 export async function updateCardholder(id: string, formData: Partial<{ user_id: string; name: string }>) {
   const supabase = await createClient();
   const user = await getUser();
@@ -70,15 +62,14 @@ export async function updateCardholder(id: string, formData: Partial<{ user_id: 
     throw new Error('Not authenticated');
   }
 
-  // Validate input
-  const parseResult = UpdateCardholderSchema.safeParse(formData);
-  if (!parseResult.success) {
-    throw new Error('Invalid input: ' + JSON.stringify(parseResult.error.format()));
+  const validatedData = UpdateCardholderSchema.safeParse(formData);
+  if (!validatedData.success) {
+    throw new Error('Invalid input: ' + JSON.stringify(validatedData.error.format()));
   }
 
   const { data, error } = await supabase
     .from('cardholders')
-    .update(parseResult.data)
+    .update(validatedData.data)
     .eq('id', id)
     .select()
     .single();
@@ -91,10 +82,8 @@ export async function updateCardholder(id: string, formData: Partial<{ user_id: 
   return data;
 }
 
-/**
- * Delete a cardholder
- */
-export async function deleteCardholder(id: string) {
+// Delete a cardholder
+export async function deleteCardholder(id: string): Promise<void> {
   const supabase = await createClient();
   const user = await getUser();
   if (!user) {
@@ -111,5 +100,5 @@ export async function deleteCardholder(id: string) {
     throw new Error('Failed to delete cardholder');
   }
 
-  return { success: true };
+  return;
 }

@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 import {
-    CreateAccountFormSchema,
+    CreateAccountSchema,
     type CreateAccountForm
 } from '@/schemas'
 
@@ -30,7 +30,7 @@ export function CreateAccountForm() {
     const [cardholders, setCardholders] = useState<{ id: string; name: string }[]>([])
 
     const { control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<CreateAccountForm>({
-        resolver: zodResolver(CreateAccountFormSchema),
+        resolver: zodResolver(CreateAccountSchema),
         defaultValues: {
             name: '',
             type: 'checking',
@@ -49,9 +49,9 @@ export function CreateAccountForm() {
     // Fetch cardholders
     useEffect(() => {
         async function fetchCardholders() {
-            const { data, error } = await getCardholders()
-            if (error) {
-                console.error('Error fetching cardholders:', error)
+            const data = await getCardholders()
+            if (!data) {
+                console.error('Error fetching cardholders:')
                 toast.error('Error fetching cardholders')
                 return
             }
@@ -73,8 +73,8 @@ export function CreateAccountForm() {
     const onSubmit = async (data: CreateAccountForm) => {
         setIsSubmitting(true)
         const result = await insertAccount(data)
-        if (result.error) {
-            console.error('Error saving account:', result.error)
+        if (!result) {
+            console.error('Error saving account')
             toast.error('Error saving account')
             setIsSubmitting(false)
             return

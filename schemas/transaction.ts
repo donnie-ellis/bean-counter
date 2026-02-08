@@ -2,10 +2,11 @@
 import { z } from 'zod';
 import { BaseEntitySchema } from '@/schemas/base';
 
+// Schemas
+// TransactionDirection
 export const TransactionDirectionSchema = z.enum(['credit', 'debit']);
 
-export type TransactionDirection = z.infer<typeof TransactionDirectionSchema>;
-
+// Transaction
 export const TransactionSchema = BaseEntitySchema.extend({
     user_id: z.string().uuid(),
     account_id: z.string().uuid(),
@@ -21,9 +22,8 @@ export const TransactionSchema = BaseEntitySchema.extend({
     raw_data: z.record(z.string(), z.any()).nullable(),
 });
 
-export type Transaction = z.infer<typeof TransactionSchema>;
-
-export const InsertTransactionSchema = z.object({
+// Create Transaction
+export const CreateTransactionSchema = z.object({
     account_id: z.string().uuid(),
     cardholder_id: z.string().uuid().nullable().optional(),
     direction: TransactionDirectionSchema,
@@ -37,34 +37,10 @@ export const InsertTransactionSchema = z.object({
     raw_data: z.record(z.string(), z.any()).nullable().optional(),
 });
 
-export const UpdateTransactionSchema = InsertTransactionSchema.partial();
+// Update Transaction
+export const UpdateTransactionSchema = CreateTransactionSchema.partial();
 
-export const CreateTransactionFormSchema = z.object({
-    account_id: z.string().uuid(),
-    cardholder_id: z.string().uuid().nullable().optional(),
-    direction: TransactionDirectionSchema,
-    amount: z.coerce.number().positive(),
-    description: z.string().trim().max(255).nullable().optional(),
-    merchant: z.string().trim().max(255).nullable().optional(),
-    category_id: z.string().uuid().nullable().optional(),
-    occurred_at: z.coerce.date(),
-    is_pending: z.coerce.boolean().optional(),
-    notes: z.string().nullable().optional(),
-    raw_data: z.record(z.string(), z.any()).nullable().optional(),
-});
-
-export type CreateTransactionForm = z.infer<typeof CreateTransactionFormSchema>;
-
-TransactionSchema.superRefine((data, ctx) => {
-    if (data.amount <= 0) {
-        ctx.addIssue({
-            path: ['amount'],
-            message: 'Amount must be greater than zero',
-            code: z.ZodIssueCode.custom,
-        });
-    }
-});
-
+// TransactionWithRelation
 export const TransactionWithRelationsSchema = TransactionSchema.extend({
     account: z.object({
         id: z.string().uuid(),
@@ -79,3 +55,19 @@ export const TransactionWithRelationsSchema = TransactionSchema.extend({
         name: z.string(),
     }).optional(),
 });
+
+// Rules
+TransactionSchema.superRefine((data, ctx) => {
+    if (data.amount <= 0) {
+        ctx.addIssue({
+            path: ['amount'],
+            message: 'Amount must be greater than zero',
+            code: z.ZodIssueCode.custom,
+        });
+    }
+});
+
+// Types
+export type TransactionDirection = z.infer<typeof TransactionDirectionSchema>;
+export type Transaction = z.infer<typeof TransactionSchema>;
+export type CreateTransactionForm = z.infer<typeof CreateTransactionSchema>;

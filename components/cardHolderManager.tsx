@@ -1,208 +1,206 @@
-'use client';
+"use client"
 
-import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Cardholder, CreateCardholderFormSchema, UpdateCardholderSchema } from '@/schemas';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
-import { getCardholders } from '@/app/cardholder/actions';
-import { getUserProfiles } from '@/app/admin/users/actions';
-import { Profile } from '@/schemas';
+import { useState } from "react"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 
-interface CardholderManagerProps {
-  onCreate: (data: { user_id: string; name: string }) => Promise<void>;
-  onUpdate: (id: string, data: Partial<{ user_id: string; name: string }>) => Promise<void>;
-  onDelete: (id: string) => Promise<{success: boolean}>;
-}
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 
-export const CardholderManager: React.FC<CardholderManagerProps> = ({ onCreate, onUpdate, onDelete }) => {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [cardholders, setCardholders] = useState<Cardholder[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+import {
+  InsertCardholderSchema,
+  type CreateCardholderFormSchema,
+  type Cardholder,
+  type Profile,
+  CreateCardholderForm,
+} from "@/schemas"
 
-  useEffect(() => {
-    async function fetchCardholders() {
-        const { data: cardholdersData, error: cardholdersError } = await getCardholders();
-        if (cardholdersError || !cardholdersData) {
-            console.error('Error fetching cardholders: ', cardholdersError)
-            toast.error('Error fetching cardholders')
-            return;
-        }
-        setCardholders(cardholdersData);
-    }
-    fetchCardholders();
-}, [cardholders]);
+import {
+  insertCardholder,
+  updateCardholder,
+  deleteCardholder,
+} from "@/app/cardholder/actions"
 
-useEffect(() => {
-  async function fetchProfiles() {
-      const { data: profilesData, error: profilesError } = await getUserProfiles();
-      if (profilesError || !profilesData) {
-          console.error('Error fetching user profiles: ', profilesError)
-          toast.error('Error fetching user profiles')
-          return;
-      }
-      setProfiles(profilesData);
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+
+export default function CardholderManager({ cardholders, profiles, className = "" }: { cardholders: Cardholder[], profiles: Profile[], className?: string }) {
+
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Cardholder | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Cardholder | null>(null)
+
+  const form = useForm<CreateCardholderForm>({
+    resolver: zodResolver(InsertCardholderSchema),
+    defaultValues: { name: "", user_id: "" },
+  })
+
+  function openAdd() {
+    setEditing(null)
+    form.reset({ name: "", user_id: "" })
+    setOpen(true)
   }
-  fetchProfiles();
-}, []);
 
-const createForm = useForm<z.infer<typeof CreateCardholderFormSchema>>({
-    resolver: zodResolver(CreateCardholderFormSchema),
-    defaultValues: { 
-      name: '', 
-      user_id: '' 
-    },
-  });
+  function openEdit(cardholder: Cardholder) {
+    setEditing(cardholder)
+    form.reset({ name: cardholder.name, user_id: cardholder.user_id ?? "" })
+    setOpen(true)
+  }
 
-  const updateForm = useForm<z.infer<typeof UpdateCardholderSchema>>({
-    resolver: zodResolver(UpdateCardholderSchema),
-    defaultValues: { name: '', user_id: '' },
-  });
-
-  useEffect(() => {
-    if (editingId) {
-      const cardholder = cardholders.find((c) => c.id === editingId);
-      if (cardholder) {
-        updateForm.reset({
-          name: cardholder.name,
-          user_id: cardholder.user_id,
-        });
-      }
-    }
-  }, [editingId, cardholders, updateForm]);
-
-  const handleCreate = async (data: any) => {
+  async function onSubmit(values: CreateCardholderForm) {
     try {
-      if (!data.user_id) {
-        toast('Select a user first');
-        return;
+      if (editing) {
+        await updateCardholder(editing.id, values)
+        toast.success("Cardholder updated")
+      } else {
+        await insertCardholder(values)
+        toast.success("Cardholder created")
       }
-      await onCreate(data);
-      createForm.reset();
-      toast('Cardholder created successfully');
-    } catch (err) {
-      console.error(err);
-      toast('Failed to create cardholder');
+      setOpen(false)
+    } catch (error) {
+      toast.error("An error occurred.")
     }
-  };
+  }
 
-  const handleUpdate = async (data: any) => {
-    if (!editingId) return;
+  async function confirmDelete() {
+    if (!deleteTarget) return
     try {
-      await onUpdate(editingId, data);
-      setEditingId(null);
-      toast('Cardholder updated successfully');
-    } catch (err) {
-      console.error(err);
-      toast('Failed to update cardholder');
+      await deleteCardholder(deleteTarget.id)
+      toast.success(`Cardholder "${deleteTarget.name}" deleted.`)
+      setDeleteTarget(null)
+    } catch (error) {
+      toast.error("An error occurred.")
     }
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Create Form */}
+    <div className={className}>
       <Card>
-        <CardHeader>
-          <CardTitle>Create Cardholder</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Cardholders</CardTitle>
+          <Button size="sm" variant="secondary" onClick={openAdd}>
+            <Plus className="h-4 w-4 mr-1" /> Add
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Label>Assign User</Label>
-          <Select
-            onValueChange={(value) => {
-              createForm.setValue('user_id', value);
-              const selectedProfile = profiles.find((p) => p.id === value);
-              if (selectedProfile) {
-                createForm.setValue('name', `${selectedProfile.first_name} ${selectedProfile.last_name}`);
-              }
-            }}
-            defaultValue=""
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a user" />
-            </SelectTrigger>
-            <SelectContent>
-              {profiles.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.first_name} {p.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
 
-          <Label>Name</Label>
-          <Input {...createForm.register('name')} placeholder="Cardholder name" />
+        <CardContent className="space-y-2">
+          <div className="mt-6 space-y-1">
+            {cardholders.map(ch => (
+              <div
+                key={ch.id}
+                className="flex items-center justify-between rounded-lg border px-3 py-2"
+              >
+                <span>{ch.name}</span>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(ch)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ch)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
-        <CardFooter>
-          <Button onClick={createForm.handleSubmit(handleCreate)}>Create</Button>
-        </CardFooter>
       </Card>
 
-      <Separator />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editing ? "Edit Cardholder" : "Add Cardholder"}
+            </DialogTitle>
+          </DialogHeader>
 
-      {/* Existing Cardholders */}
-      {cardholders.map((cardholder) => (
-        <Card key={cardholder.id}>
-          <CardHeader>
-            <CardTitle>
-              {editingId === cardholder.id ? 'Edit Cardholder' : cardholder.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {editingId === cardholder.id ? (
-              <>
-                <Label>User</Label>
-                <Select
-                  onValueChange={(value) => updateForm.setValue('user_id', value)}
-                  defaultValue={updateForm.getValues('user_id')}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profiles.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.first_name} {p.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <div className="space-y-1">
+                  <Label>Name</Label>
+                  <Input {...field} />
+                  {fieldState.error && (
+                    <p className="text-sm text-destructive">{fieldState.error.message}</p>
+                  )}
+                </div>
+              )}
+            />
 
-                <Label>Name</Label>
-                <Input {...updateForm.register('name')} placeholder="Cardholder name" />
-              </>
-            ) : (
-              <p>User: {profiles.find((p) => p.id === cardholder.user_id)?.first_name} {profiles.find((p) => p.id === cardholder.user_id)?.last_name}</p>
-            )}
-          </CardContent>
-          <CardFooter className="flex gap-2">
-            {editingId === cardholder.id ? (
-              <>
-                <Button variant="outline" onClick={() => setEditingId(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={updateForm.handleSubmit(handleUpdate)}>Save</Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setEditingId(cardholder.id)}>Edit</Button>
-                <Button variant="destructive" onClick={() => {
-                  onDelete(cardholder.id)
-                  toast('Cardholder deleted successfully');
-                }}>Delete</Button>
-              </>
-            )}
-          </CardFooter>
-        </Card>
-      ))}
+            <Controller
+              control={form.control}
+              name="user_id"
+              render={({ field }) => (
+                <div className="space-y-1">
+                  <Label>User</Label>
+                  <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profiles.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.first_name} {p.last_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            />
+
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete cardholder?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete
+              <span className="font-medium"> {deleteTarget?.name}</span>.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  );
-};
+  )
+}
