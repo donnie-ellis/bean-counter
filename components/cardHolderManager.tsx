@@ -20,7 +20,6 @@ import { Pencil, Plus, Trash2 } from "lucide-react"
 
 import {
   CreateCardholderSchema,
-  type CreateCardholderFormSchema,
   type Cardholder,
   type Profile,
   CreateCardholderForm,
@@ -43,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
 
 export default function CardholderManager({ cardholders, profiles, className = "" }: { cardholders: Cardholder[], profiles: Profile[], className?: string }) {
 
@@ -104,24 +104,27 @@ export default function CardholderManager({ cardholders, profiles, className = "
         </CardHeader>
 
         <CardContent className="space-y-2">
-          <div className="mt-6 space-y-1">
+          <ItemGroup className="mt-6 space-y-1">
             {cardholders.map(ch => (
-              <div
+              <Item
                 key={ch.id}
-                className="flex items-center justify-between rounded-lg border px-3 py-2"
+                className="flex items-center justify-between px-3 py-2"
+                variant="outline"
               >
-                <span>{ch.name}</span>
-                <div className="flex gap-1">
+                <ItemContent>
+                  <span>{ch.name}</span>
+                </ItemContent>
+                <ItemActions className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(ch)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ch)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
-                </div>
-              </div>
+                </ItemActions>
+              </Item>
             ))}
-          </div>
+          </ItemGroup>
         </CardContent>
       </Card>
 

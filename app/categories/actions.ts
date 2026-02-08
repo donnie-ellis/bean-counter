@@ -59,7 +59,7 @@ export async function createCategory(category: InsertCategoryForm): Promise<Cate
     }
     const { data, error } = await supabase
         .from('categories')
-        .insert(validatedData.data)
+        .insert({ ...validatedData.data, user_id: user.id })
         .select()
         .single();
     if (error) {
@@ -92,7 +92,7 @@ export async function updateCategory(id: string, category: UpdateCategoryForm): 
         console.error('Error updating category:', error);
         throw new Error('Failed to update category');
     }
-    revalidatePath('/budget/categories')
+    revalidatePath('/categories')
     return data;
 }
 

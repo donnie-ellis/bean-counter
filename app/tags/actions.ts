@@ -59,7 +59,7 @@ export async function insertTag(tag: CreateTagForm): Promise<Tag> {
     }
     const { data, error } = await supabase
         .from('tags')
-        .insert(validatedData.data)
+        .insert({ ...validatedData.data, user_id: user.id })
         .select()
         .single();
     if (error) {

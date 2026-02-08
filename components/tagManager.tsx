@@ -24,6 +24,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react"
 
 import { CreateTagSchema, type CreateTagForm, type Tag } from "@/schemas"
 import { insertTag, updateTag, deleteTag } from "@/app/tags/actions"
+import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
 
 export default function TagManager({ tags, className = "" }: { tags: Tag[], className?: string }) {
     const [open, setOpen] = useState(false)
@@ -70,6 +71,7 @@ export default function TagManager({ tags, className = "" }: { tags: Tag[], clas
             toast.success("Tag deleted successfully")
         } catch (error) {
             toast.error("Failed to delete tag")
+            console.error(error)
         } finally {
             setDeleteTarget(null)
         }
@@ -86,24 +88,27 @@ export default function TagManager({ tags, className = "" }: { tags: Tag[], clas
                 </CardHeader>
 
                 <CardContent>
-                    <div className="mt-6 space-y-2">
+                    <ItemGroup className="mt-6 space-y-2">
                         {tags.map(tag => (
-                            <div
+                            <Item
                                 key={tag.id}
-                                className="flex items-center justify-between rounded-lg border px-3 py-2"
+                                className="flex items-center justify-between px-3 py-2"
+                                variant="outline"
                             >
-                                <span className="font-medium">{tag.name}</span>
-                                <div className="flex gap-1">
+                                <ItemContent>
+                                    <span className="font-medium">{tag.name}</span>
+                                </ItemContent>
+                                <ItemActions className="flex gap-1">
                                     <Button variant="ghost" size="icon" onClick={() => openEdit(tag)}>
                                         <Pencil className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(tag)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
-                                </div>
-                            </div>
+                                </ItemActions>
+                            </Item>
                         ))}
-                    </div>
+                    </ItemGroup>
                 </CardContent>
             </Card>
 

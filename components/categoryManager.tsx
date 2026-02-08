@@ -34,6 +34,17 @@ import {
     updateCategory,
     deleteCategory,
 } from "@/app/categories/actions"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia } from "@/components/ui/item"
 
 interface CategoryNode extends Category {
     children?: CategoryNode[]
@@ -56,16 +67,6 @@ function buildTree(categories: Category[]): CategoryNode[] {
     return roots
 }
 
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 
 export default function CategoryManager({ categories, className = "" }: { categories: Category[], className?: string }) {
     const tree = useMemo(() => buildTree(categories), [categories])
@@ -120,11 +121,11 @@ export default function CategoryManager({ categories, className = "" }: { catego
                 </CardHeader>
 
                 <CardContent className="space-y-2">
-                    <div className="mt-6 space-y-1">
+                    <ItemGroup className="mt-6 space-y-1">
                         {tree.map(cat => (
                             <Collapsible key={cat.id} defaultOpen={false}>
-                                <div className="flex items-center justify-between border px-3 py-2">
-                                    <div className="flex items-center gap-2">
+                                <Item className="flex items-center justify-between border px-3 py-2" variant="outline">
+                                    <ItemMedia>
                                         {cat.children && cat.children.length > 0 ? (
                                             <CollapsibleTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90 transition">
@@ -134,10 +135,11 @@ export default function CategoryManager({ categories, className = "" }: { catego
                                         ) : (
                                             <span className="w-8" />
                                         )}
+                                    </ItemMedia>
+                                    <ItemContent className="flex gap-2">
                                         <span className="font-medium">{cat.name}</span>
-                                    </div>
-
-                                    <div className="flex gap-1">
+                                    </ItemContent>
+                                    <ItemActions className="flex gap-1">
                                         <Button variant="ghost" size="icon" onClick={() => openAdd(cat.id)}>
                                             <Plus className="h-4 w-4" />
                                         </Button>
@@ -147,34 +149,37 @@ export default function CategoryManager({ categories, className = "" }: { catego
                                         <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(cat)}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
-                                    </div>
-                                </div>
-
+                                    </ItemActions>
+                                </Item>
+                                        
                                 {cat.children && cat.children.length > 0 && (
                                     <CollapsibleContent>
-                                        <div className="ml-8 mt-1 space-y-1">
+                                        <ItemGroup className="ml-8 mt-1 space-y-1">
                                             {cat.children.map(child => (
-                                                <div
+                                                <Item
                                                     key={child.id}
-                                                    className="flex items-center justify-between rounded-lg border px-3 py-2"
+                                                    className="flex items-center justify-between px-3 py-2"
+                                                    variant="outline"
                                                 >
-                                                    <span>{child.name}</span>
-                                                    <div className="flex gap-1">
+                                                    <ItemContent>
+                                                        <span>{child.name}</span>
+                                                    </ItemContent>
+                                                    <ItemActions className="flex gap-1">
                                                         <Button variant="ghost" size="icon" onClick={() => openEdit(child)}>
                                                             <Pencil className="h-4 w-4" />
                                                         </Button>
                                                         <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(child)}>
                                                             <Trash2 className="h-4 w-4 text-destructive" />
                                                         </Button>
-                                                    </div>
-                                                </div>
+                                                    </ItemActions>
+                                                </Item>
                                             ))}
-                                        </div>
+                                        </ItemGroup>
                                     </CollapsibleContent>
                                 )}
                             </Collapsible>
                         ))}
-                    </div>
+                    </ItemGroup>
                 </CardContent>
             </Card>
 
