@@ -71,3 +71,4 @@ TransactionSchema.superRefine((data, ctx) => {
 export type TransactionDirection = z.infer<typeof TransactionDirectionSchema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
 export type CreateTransactionForm = z.infer<typeof CreateTransactionSchema>;
+export type UpdateTransactionForm = z.infer<typeof UpdateTransactionSchema>;

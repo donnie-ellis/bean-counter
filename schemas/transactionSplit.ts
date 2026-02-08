@@ -2,31 +2,26 @@
 import { z } from 'zod';
 import { BaseEntitySchema } from '@/schemas/base';
 
+// Schemas
+
+// Transaction Split
 export const TransactionSplitSchema = BaseEntitySchema.extend({
     transaction_id: z.string().uuid(),
     category_id: z.string().uuid().nullable(),
     amount: z.number().positive(),
 });
 
-export type TransactionSplit = z.infer<typeof TransactionSplitSchema>;
-
-export const InsertTransactionSplitSchema = z.object({
+// CreateTransaction Split
+export const CreateTransactionSplitSchema = z.object({
     transaction_id: z.string().uuid(),
     category_id: z.string().uuid().nullable().optional(),
     amount: z.number().positive(),
 });
 
-export const UpdateTransactionSplitSchema = InsertTransactionSplitSchema.partial();
+// Update Transaction Split
+export const UpdateTransactionSplitSchema = CreateTransactionSplitSchema.partial();
 
-export const CreateTransactionSplitFormSchema = z.object({
-    category_id: z.string().uuid().nullable().optional(),
-    amount: z.coerce.number().positive(),
-});
-
-export type CreateTransactionSplitForm = z.infer<typeof CreateTransactionSplitFormSchema>;
-
-export const TransactionSplitListSchema = z.array(TransactionSplitSchema);
-
+// Transaction Splits Sum
 export const TransactionSplitsSumSchema = z.array(TransactionSplitSchema).superRefine((splits, ctx) => {
     const total = splits.reduce((sum, s) => sum + s.amount, 0);
     if (total <= 0) {
@@ -37,3 +32,9 @@ export const TransactionSplitsSumSchema = z.array(TransactionSplitSchema).superR
         });
     }
 });
+
+// Types
+export type TransactionSplit = z.infer<typeof TransactionSplitSchema>;
+export type CreateTransactionSplitForm = z.infer<typeof CreateTransactionSplitSchema>;
+export type UpdateTransactionSplitForm = z.infer<typeof UpdateTransactionSplitSchema>;
+export type TransactionSplitsSum = z.infer<typeof TransactionSplitsSumSchema>;

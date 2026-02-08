@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { BaseEntitySchema } from '@/schemas/base';
 import { TransactionDirection, TransactionDirectionSchema } from '@/schemas';
 
+// Schemas
+
+// Recurrence Frequency
 export const RecurrenceFrequencySchema = z.enum([
     'daily',
     'weekly',
@@ -12,8 +15,7 @@ export const RecurrenceFrequencySchema = z.enum([
     'yearly',
 ]);
 
-export type RecurrenceFrequency = z.infer<typeof RecurrenceFrequencySchema>;
-
+// Recurring Transaction
 export const RecurringTransactionSchema = BaseEntitySchema.extend({
     user_id: z.string().uuid(),
     account_id: z.string().uuid(),
@@ -25,11 +27,10 @@ export const RecurringTransactionSchema = BaseEntitySchema.extend({
     start_date: z.date(),
     next_run_date: z.date(),
     is_active: z.boolean(),
-});
+}); export type RecurrenceFrequency = z.infer<typeof RecurrenceFrequencySchema>;
 
-export type RecurringTransaction = z.infer<typeof RecurringTransactionSchema>;
-
-export const InsertRecurringTransactionSchema = z.object({
+// Create Recurring Transaction
+export const CreateRecurringTransactionSchema = z.object({
     account_id: z.string().uuid(),
     category_id: z.string().uuid().nullable().optional(),
     direction: TransactionDirectionSchema,
@@ -41,21 +42,10 @@ export const InsertRecurringTransactionSchema = z.object({
     is_active: z.boolean().optional(), // DB default true
 });
 
-export const UpdateRecurringTransactionSchema = InsertRecurringTransactionSchema.partial();
+// Update Recurring Transaction
+export const UpdateRecurringTransactionSchema = CreateRecurringTransactionSchema.partial();
 
-export const CreateRecurringTransactionFormSchema = z.object({
-    category_id: z.string().uuid().nullable().optional(),
-    direction: TransactionDirectionSchema,
-    amount: z.coerce.number().positive(),
-    description: z.string().trim().max(255).nullable().optional(),
-    frequency: RecurrenceFrequencySchema,
-    start_date: z.coerce.date(),
-    next_run_date: z.coerce.date(),
-    is_active: z.coerce.boolean().optional(),
-});
-
-export type CreateRecurringTransactionForm = z.infer<typeof CreateRecurringTransactionFormSchema>;
-
+// Rules
 RecurringTransactionSchema.superRefine((data, ctx) => {
     if (data.next_run_date < data.start_date) {
         ctx.addIssue({
@@ -65,3 +55,8 @@ RecurringTransactionSchema.superRefine((data, ctx) => {
         });
     }
 });
+
+// Types
+export type RecurringTransaction = z.infer<typeof RecurringTransactionSchema>;
+export type CreateRecurringTransactionForm = z.infer<typeof CreateRecurringTransactionSchema>;
+export type UpdateRecurringTransactionForm = z.infer<typeof UpdateRecurringTransactionSchema>;

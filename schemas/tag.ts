@@ -1,4 +1,4 @@
-// schemas/tag.ts
+// ./schemas/tag.ts
 
 import { z } from 'zod';
 import { BaseEntitySchema } from '@/schemas/base';
@@ -11,39 +11,31 @@ export const TagSchema = BaseEntitySchema.extend({
     name: z.string().trim().min(1, 'Name is required').max(255),
 });
 
-// Insert Tag
-export const InsertTagSchema = z.object({
-    name: z.string().trim().min(1).max(255),
-});
-
-export const CreateTagFormSchema = z.object({
+// Create Tag
+export const CreateTagSchema = z.object({
     name: z.string().trim().min(1).max(255),
 });
 
 // Update Tag
-export const UpdateTagSchema = InsertTagSchema.partial();
+export const UpdateTagSchema = CreateTagSchema.partial();
 
+// Tag List
 export const TagListSchema = z.array(TagSchema);
 
+// Tag Name Array
 export const TagNameArraySchema = z.array(
     z.string().trim().min(1).max(255)
 );
 
+// Tag Relation
 export const TagRelationSchema = z.object({
     tag_id: z.string().uuid(),
 });
 
 // Types
 export type Tag = z.infer<typeof TagSchema>;
-
-export type CreateTagForm = z.infer<typeof CreateTagFormSchema>;
-
+export type CreateTagForm = z.infer<typeof CreateTagSchema>;
 export type UpdateTagForm = z.infer<typeof UpdateTagSchema>;
-
 export type TagRelation = z.infer<typeof TagRelationSchema>;
-
 export type TagList = z.infer<typeof TagListSchema>;
-
 export type TagNameArray = z.infer<typeof TagNameArraySchema>;
-
-

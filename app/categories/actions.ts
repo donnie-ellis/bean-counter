@@ -4,7 +4,7 @@
 
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
-import { Category, UpdateCategoryForm, InsertCategoryForm, InsertCategorySchema, UpdateCategorySchema, CategorySchema } from '@/schemas'
+import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategorySchema } from '@/schemas'
 import { revalidatePath } from 'next/cache';
 
 // Get all categories
@@ -52,7 +52,7 @@ export async function createCategory(category: InsertCategoryForm): Promise<Cate
     if (!user) {
         throw new Error('Not authenticated');
     }
-    const validatedData = InsertCategorySchema.safeParse({ ...category, user_id: user.id });
+    const validatedData = CreateCategorySchema.safeParse({ ...category, user_id: user.id });
     if (!validatedData.success) {
         console.error('Validation failed:', validatedData.error);
         throw new Error('Validation failed');

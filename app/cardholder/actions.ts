@@ -2,7 +2,7 @@
 
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
-import { Cardholder, InsertCardholderSchema, UpdateCardholderSchema } from '@/schemas';
+import { Cardholder, CreateCardholderSchema, UpdateCardholderSchema } from '@/schemas';
 import { z } from 'zod';
 
 // Get all cardholders
@@ -35,7 +35,7 @@ export async function insertCardholder(formData: { user_id: string; name: string
   }
 
   // Validate input
-  const validatedData = InsertCardholderSchema.safeParse(formData);
+  const validatedData = CreateCardholderSchema.safeParse(formData);
   if (!validatedData.success) {
     throw new Error('Invalid input: ' + JSON.stringify(validatedData.error.format()));
   }

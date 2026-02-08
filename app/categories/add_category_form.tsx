@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Category, InsertCategoryForm, InsertCategorySchema } from '@/schemas';
+import { Category, InsertCategoryForm, CreateCategorySchema } from '@/schemas';
 import { toast } from 'sonner';
 import { createCategory } from '@/app/categories/actions';
 
@@ -37,7 +37,7 @@ export function AddCategoryForm({
     compact = false,
 }: AddCategoryFormProps) {
     const { control, handleSubmit, reset } = useForm<InsertCategoryForm>({
-        resolver: zodResolver(InsertCategorySchema),
+        resolver: zodResolver(CreateCategorySchema),
         defaultValues: {
             name: '',
             parent_id: null

@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Pencil, Plus, Trash2 } from "lucide-react"
 
 import {
-  InsertCardholderSchema,
+  CreateCardholderSchema,
   type CreateCardholderFormSchema,
   type Cardholder,
   type Profile,
@@ -51,7 +51,7 @@ export default function CardholderManager({ cardholders, profiles, className = "
   const [deleteTarget, setDeleteTarget] = useState<Cardholder | null>(null)
 
   const form = useForm<CreateCardholderForm>({
-    resolver: zodResolver(InsertCardholderSchema),
+    resolver: zodResolver(CreateCardholderSchema),
     defaultValues: { name: "", user_id: "" },
   })
 

@@ -2,29 +2,29 @@
 import { z } from 'zod';
 import { TimestampedEntitySchema } from '@/schemas/base';
 
+// Schemas
+
+// Account Role
 export const AccountRoleSchema = z.enum(['owner', 'editor', 'viewer']);
 
-export type AccountRole = z.infer<typeof AccountRoleSchema>;
-
+// Account Member
 export const AccountMemberSchema = TimestampedEntitySchema.extend({
     account_id: z.string().uuid(),
     user_id: z.string().uuid(),
     role: AccountRoleSchema,
 });
 
-export type AccountMember = z.infer<typeof AccountMemberSchema>;
-
-export const InsertAccountMemberSchema = AccountMemberSchema.omit({
+// Create AccountMember
+export const CreateAccountMemberSchema = AccountMemberSchema.omit({
     created_at: true,
 });
 
+// Update AccountMember
 export const UpdateAccountMemberSchema = z.object({
     role: AccountRoleSchema,
 });
 
-export const AddAccountMemberFormSchema = z.object({
-    user_id: z.string().uuid(),
-    role: AccountRoleSchema.optional(),
-});
-
-export type AddAccountMemberForm = z.infer<typeof AddAccountMemberFormSchema>;
+// Type
+export type AccountRole = z.infer<typeof AccountRoleSchema>;
+export type AccountMember = z.infer<typeof AccountMemberSchema>;
+export type CreateAccountMemberForm = z.infer<typeof CreateAccountMemberSchema>;

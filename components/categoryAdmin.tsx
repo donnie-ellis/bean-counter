@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label"
 import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react"
 
 import {
-    InsertCategorySchema,
+    CreateCategorySchema,
     type InsertCategoryForm,
     type Category,
 } from "@/schemas"
@@ -78,7 +78,7 @@ export default function CategoryManager({ categories }: { categories: Category[]
     const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
 
     const form = useForm<InsertCategoryForm>({
-        resolver: zodResolver(InsertCategorySchema),
+        resolver: zodResolver(CreateCategorySchema),
         defaultValues: { name: "", parent_id: null },
     })
 

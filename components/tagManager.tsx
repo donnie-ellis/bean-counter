@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Pencil, Plus, Trash2 } from "lucide-react"
 
-import { CreateTagFormSchema, type CreateTagForm, type Tag } from "@/schemas"
+import { CreateTagSchema, type CreateTagForm, type Tag } from "@/schemas"
 import { insertTag, updateTag, deleteTag } from "@/app/tags/actions"
 
 export default function TagManager({ tags, className = "" }: { tags: Tag[], className?: string }) {
@@ -31,7 +31,7 @@ export default function TagManager({ tags, className = "" }: { tags: Tag[], clas
     const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
 
     const form = useForm<CreateTagForm>({
-        resolver: zodResolver(CreateTagFormSchema),
+        resolver: zodResolver(CreateTagSchema),
         defaultValues: { name: "" },
     })
 

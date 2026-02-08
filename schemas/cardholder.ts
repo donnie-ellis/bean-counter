@@ -12,7 +12,7 @@ export const CardholderSchema = BaseEntitySchema.extend({
 });
 
 // Insert Cardholder
-export const InsertCardholderSchema = z.object({
+export const CreateCardholderSchema = z.object({
     user_id: z.string().uuid(),
     name: z.string().trim().min(1).max(255),
 });
@@ -23,7 +23,7 @@ export const CreateCardholderFormSchema = z.object({
 });
 
 // Update Cardholder
-export const UpdateCardholderSchema = InsertCardholderSchema.partial();
+export const UpdateCardholderSchema = CreateCardholderSchema.partial();
 
 
 // Types

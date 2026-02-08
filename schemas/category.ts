@@ -1,4 +1,4 @@
-// schemas/category.ts
+// ./schemas/category.ts
 
 import { z } from 'zod';
 import { BaseEntitySchema } from '@/schemas/base';
@@ -13,18 +13,14 @@ export const CategorySchema = BaseEntitySchema.extend({
 });
 
 // Insert Category
-export const InsertCategorySchema = z.object({
+export const CreateCategorySchema = z.object({
     name: z.string().trim().min(1).max(255),
     parent_id: z.string().uuid().nullable().optional(),
 });
 
 // Update Category
-export const UpdateCategorySchema = InsertCategorySchema.partial();
+export const UpdateCategorySchema = CreateCategorySchema.partial();
 
-export const CreateCategoryFormSchema = z.object({
-    name: z.string().trim().min(1).max(255),
-    parent_id: z.string().uuid().nullable().optional(),
-});
 
 // Tree
 export const CategoryTreeSchema: z.ZodType<Category & { children?: Category[] }> =
@@ -35,9 +31,6 @@ export const CategoryTreeSchema: z.ZodType<Category & { children?: Category[] }>
 
 // Types
 export type Category = z.infer<typeof CategorySchema>;
-
 export type UpdateCategoryForm = z.infer<typeof UpdateCategorySchema>;
-
-export type InsertCategoryForm = z.infer<typeof InsertCategorySchema>;
-
-export type CreateCategoryForm = z.infer<typeof CreateCategoryFormSchema>;
+export type InsertCategoryForm = z.infer<typeof CreateCategorySchema>;
+export type CreateCategoryForm = z.infer<typeof CreateCategorySchema>;
