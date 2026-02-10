@@ -1,31 +1,43 @@
-// ./app/accounts/create/account_form.tsx
+// ./app/accounts/add_account_form.tsx
 
 'use client'
-
-import { useState, useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import {
-    CreateAccountSchema,
-    type CreateAccountForm
-} from '@/schemas'
-
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import { CreateAccountSchema, type CreateAccountForm, Account } from '@/schemas'
 import { insertAccount } from '@/app/accounts/actions'
 import { getCardholders } from '@/app/cardholder/actions'
-
-import {
-    Card, CardContent, CardDescription, CardHeader, CardTitle
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FieldLabel, FieldError, FieldGroup, FieldLegend, FieldSet, FieldDescription } from '@/components/ui/field'
 
-export function CreateAccountForm() {
+interface AddAccountFormProps {
+    accounts: Account[];
+    onAccountAdded?: (account: Account) => void;
+    onCancel?: () => void;
+    showSubmitButton?: boolean;
+    submitButtonText?: string;
+    compact?: boolean;
+}
+
+export function CreateAccountForm({ 
+    accounts,
+    onAccountAdded,
+    onCancel,
+    showSubmitButton = true,
+    submitButtonText = 'Create Account',
+    compact = false 
+}: AddAccountFormProps ) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [cardholders, setCardholders] = useState<{ id: string; name: string }[]>([])
 
@@ -85,33 +97,26 @@ export function CreateAccountForm() {
     }
 
     return (
-        <Card className="w-full max-w-2xl shadow-lg">
-            <CardHeader className="space-y-1 pb-6">
-                <CardTitle>Create New Account</CardTitle>
-                <CardDescription>Add a new financial account</CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Account Name */}
-                    <Controller
-                        name="name"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="name">Account Name</FieldLabel>
-                                <Input
-                                    id="name"
-                                    placeholder="e.g., My Checking Account"
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
-                                    aria-invalid={fieldState.invalid}
-                                />
-                                {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                            </Field>
-                        )}
-                    />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Account Name */}
+            <Controller
+                name="name"
+                control={control}
+                render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className='flex-1'>
+                        <FieldLabel htmlFor="name">Account Name</FieldLabel>
+                        <Input
+                            id="name"
+                            placeholder="e.g., My Checking Account"
+                            {...field}
+                            value={field.value ?? ''}
+                            className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
+                            aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
+                    </Field>
+                )}
+            />
 
                     {/* Account Type */}
                     <Controller
@@ -283,7 +288,5 @@ export function CreateAccountForm() {
                         </Button>
                     </div>
                 </form>
-            </CardContent>
-        </Card>
     )
 }
