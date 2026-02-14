@@ -84,12 +84,12 @@ export default function MainMenu({ className, user, accounts }: MainMenuProps) {
                     <Shield className='h-4 w-4' />
                     Admin
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className='p-2'>
-                    <ul className='flex flex-col gap-1 min-w-[250px]'>
+                <NavigationMenuContent className="p-2">
+                    <ul className='flex flex-col gap-1 min-w-62.5'>
                         <li>
-                            <Item asChild>
+                            <Item asChild className="hover:bg-background/90 hover:text-foreground cursor-pointer">
                                 <Link href="/admin/users" className='flex items-start gap-3'>
-                                    <Users className='h-5 w-5 mt-0.5 flex-shrink-0' />
+                                    <Users className='h-5 w-5 mt-0.5 shrink-0' />
                                     <ItemContent>
                                         <ItemTitle>Users</ItemTitle>
                                         <ItemDescription>Manage existing or invite new users</ItemDescription>
@@ -100,7 +100,7 @@ export default function MainMenu({ className, user, accounts }: MainMenuProps) {
                         <li>
                             <Item asChild>
                                 <Link href="/admin/budget" className='flex items-start gap-3'>
-                                    <DollarSign className='h-5 w-5 mt-0.5 flex-shrink-0' />
+                                    <DollarSign className='h-5 w-5 mt-0.5 shrink-0' />
                                     <ItemContent>
                                         <ItemTitle>Budget</ItemTitle>
                                         <ItemDescription>Setup accounts and budgets</ItemDescription>

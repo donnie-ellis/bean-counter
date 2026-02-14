@@ -18,8 +18,8 @@ export default async function BudgetAdminPage() {
     const profiles = await getUserProfiles();
 
     return (
-        <div className="lg:flex lg:flex-row px-4 gap-4">
-            <div className="flex flex-col gap-4 basis-3/4">
+        <main className="lg:flex lg:flex-row px-4 gap-4">
+            <section className="flex flex-col gap-4 basis-3/4">
                 {/* Accounts */}
                 {!accounts ? (
                     <div>Loading...</div>
@@ -33,8 +33,8 @@ export default async function BudgetAdminPage() {
                 ) : (
                     <CategoryManager categories={categories} />
                 )}
-            </div>
-            <div className="flex flex-col gap-4 basis-1/4">
+            </section>
+            <section className="flex flex-col gap-4 basis-1/4">
                 {/* Cardholders */}
                 {!cardholders || !profiles ? (
                     <div>Loading...</div>
@@ -49,7 +49,7 @@ export default async function BudgetAdminPage() {
                 ) : (
                     <TagManager tags={tags} />
                 )}
-            </div>
-        </div>
+            </section>
+        </main>
     )
 }

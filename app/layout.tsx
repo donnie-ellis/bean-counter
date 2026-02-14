@@ -41,7 +41,7 @@ export default async function RootLayout({
         : null
         }
         {children}
-        <Toaster position="top-right" />
+        <Toaster expand={true} position="bottom-center" />
       </body>
     </html>
   );
