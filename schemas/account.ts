@@ -31,9 +31,24 @@ export const CreateAccountSchema = z.object({
     institution: z.string().trim().max(255).nullable().optional(),
     credit_limit: z.number().nullable().optional(),
     is_active: z.boolean().optional(),
-    cardholder_id: z.string().uuid().nullable().optional(),
-    account_member_ids: z.array(z.string()).optional(),
+    user_id: z.string().uuid(),
 });
+
+// Account with Members
+export const AccountWithMembersSchema = AccountSchema.extend({
+    account_members: z.array(z.object({
+        user_id: z.string().uuid(),
+        role: z.string(),
+    }))
+});
+
+// Create Account Form (without user_id, account_members, and timestamps)
+export const CreateAccountFormSchema = AccountWithMembersSchema.omit({
+    user_id: true,
+    id: true,
+    created_at: true,
+});
+
 
 // Update Account
 export const UpdateAccountSchema = CreateAccountSchema.partial();
@@ -41,7 +56,9 @@ export const UpdateAccountSchema = CreateAccountSchema.partial();
 // Type
 export type Account = z.infer<typeof AccountSchema>;
 
-export type CreateAccountForm = z.infer<typeof CreateAccountSchema>;
+export type AccountWithMembers = z.infer<typeof AccountWithMembersSchema>;
+
+export type CreateAccountForm = z.infer<typeof CreateAccountFormSchema>;
 
 export type UpdateAccountForm = z.infer<typeof UpdateAccountSchema>;
 

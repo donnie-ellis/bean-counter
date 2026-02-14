@@ -23,6 +23,14 @@ export const UpdateProfileSchema = z.object({
     last_name: z.string().min(1, 'Last name is required').max(255).optional(),
 })
 
+export const SmallProfileSchema = ProfileSchema.pick({
+    id: true,
+    email: true,
+    first_name: true,
+    last_name: true,
+});
+
 // Types
 export type Profile = z.infer<typeof ProfileSchema>;
 export type UpdateProfileForm = z.infer<typeof UpdateProfileSchema>;
+export type SmallProfile = z.infer<typeof SmallProfileSchema>;

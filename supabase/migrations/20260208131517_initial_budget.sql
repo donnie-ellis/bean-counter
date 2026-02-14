@@ -29,8 +29,6 @@ create table public.accounts (
     unique (user_id, name)
 );
 
-alter table public.accounts enable row level security;
-
 -- ===== Account Members =====
 create table public.account_members (
     account_id uuid references public.accounts (id) on delete cascade,
@@ -234,23 +232,68 @@ $$ language plpgsql stable;
 
 -- Helper for RLS on the transactions table
 create or replace function public.has_account_write_access(acc_id uuid)
-returns boolean as $$
-begin
-  return exists (
-    select 1
-    from public.accounts a
-    where a.id = acc_id
-      and a.user_id = auth.uid()
-  )
-  or exists (
-    select 1
-    from public.account_members am
-    where am.account_id = acc_id
-      and am.user_id = auth.uid()
-      and am.role in ('owner', 'editor')
-  );
-end;
-$$ language plpgsql stable;
+returns boolean
+language sql
+stable
+as $$
+  select
+    public.is_admin()
+
+    or exists (
+      select 1
+      from public.accounts a
+      where a.id = acc_id
+        and a.user_id = auth.uid()
+    )
+
+    or exists (
+      select 1
+      from public.account_members am
+      where am.account_id = acc_id
+        and am.user_id = auth.uid()
+        and am.role in ('owner', 'editor')
+    );
+$$;
+
+-- Helper function for RLS to see if a user can  select and account
+create or replace function public.can_select_account(acc_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.accounts a
+      where a.id = acc_id
+        and (
+          a.user_id = auth.uid()
+          or exists (
+            select 1
+            from public.account_members am
+            where am.account_id = a.id
+              and am.user_id = auth.uid()
+          )
+        )
+    );
+$$;
+
+-- Helper function to see if a user is an account owner
+create or replace function public.is_account_owner(acc_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.accounts a
+      where a.id = acc_id
+        and a.user_id = auth.uid()
+    );
+$$;
 
 -- ============================
 -- Triggers
@@ -284,39 +327,56 @@ create trigger trg_validate_splits
 after insert or update on public.transaction_splits
 for each row execute function public.validate_transaction_splits();
 
-create or replace function public.add_account_owner()
-returns trigger as $$
-begin
-  insert into public.account_members (account_id, user_id, role)
-  values (new.id, new.user_id, 'owner');
-  return new;
-end;
-$$ language plpgsql;
-
-create trigger trg_add_account_owner
-after insert on public.accounts
-for each row execute function public.add_account_owner();
-
 -- ============================
 -- RLS
 -- ============================
 -- Account Table
-create policy "Account access" on public.accounts for all using (
-    user_id = auth.uid ()
-    or exists (
-        select 1
-        from public.account_members am
-        where
-            am.account_id = accounts.id
-            and am.user_id = auth.uid ()
-    )
-)
-with
-    check (user_id = auth.uid ());
+alter table public.accounts enable row level security;
 
-alter table public.cardholders enable row level security;
+create policy "Account select" on public.accounts for
+select using (
+        public.can_select_account (accounts.id)
+    );
+
+create policy "Allow admin insert access" on public.accounts for
+insert
+with
+    check (public.is_admin ());
+
+create policy "Allow admin update access" on public.accounts for
+update using (
+    public.is_account_owner (accounts.id)
+);
+
+create policy "Allow admin delete access" on public.accounts for delete using (public.is_admin ());
+
+-- Account Members Table
+alter table public.account_members enable row level security;
+
+create policy "Account members select" on public.account_members for
+select using (
+        public.can_select_account (account_id)
+    );
+
+create policy "Account members insert" on public.account_members for
+insert
+with
+    check (
+        public.is_account_owner (account_id)
+    );
+
+create policy "Account members update" on public.account_members for
+update using (
+    public.is_account_owner (account_id)
+);
+
+create policy "Account members delete" on public.account_members for delete using (
+    public.is_account_owner (account_id)
+);
 
 -- Cardholders table
+alter table public.cardholders enable row level security;
+
 create policy "Cardholder access" on public.cardholders for all using (user_id = auth.uid ())
 with
     check (user_id = auth.uid ());

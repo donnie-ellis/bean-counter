@@ -2,13 +2,27 @@
 
 'use server';
 
-import { UpdateProfileForm, UpdateProfileSchema } from "@/schemas/profile";
+import { SmallProfile, UpdateProfileForm, UpdateProfileSchema } from "@/schemas/profile";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 export type State = {
     status: "success" | "error";
     message: string;
 } | null;
+
+export async function getSmallProfiles(): Promise<SmallProfile[]> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name');
+
+    if (error) {
+        console.error('Error retrieving profiles: ', error)
+        throw new Error('Failed to retrieve profiles');
+    }
+
+    return data as SmallProfile[];
+}
 
 export async function updateProfile(input: UpdateProfileForm): Promise<{ data: any, error: any }>{
     const supabase = await createClient();
