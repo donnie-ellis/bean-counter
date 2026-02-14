@@ -68,7 +68,7 @@ export default function AccountManager({
                         size="sm"
                         onClick={openAdd}
                     >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-4 w-4" /> Add
                     </Button>
                 </CardHeader>
                 <CardContent>
