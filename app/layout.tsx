@@ -5,6 +5,7 @@ import MainMenu from "@/components/mainMenu";
 import { getUser } from "@/lib/auth/getUser";
 import { getProfile } from "@/lib/auth/getProfile";
 import { getAccounts } from "@/app/accounts/actions";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default async function RootLayout({
         : null
         }
         {children}
+        <Toaster position="top-right" />
       </body>
     </html>
   );

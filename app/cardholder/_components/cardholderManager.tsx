@@ -1,36 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Pencil, Plus, Trash2 } from "lucide-react"
-
-import {
-  CreateCardholderSchema,
-  type Cardholder,
-  type Profile,
-  CreateCardholderForm,
-} from "@/schemas"
-
-import {
-  insertCardholder,
-  updateCardholder,
-  deleteCardholder,
-} from "@/app/cardholder/actions"
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,28 +16,48 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 
-export default function CardholderManager({ cardholders, profiles, className = "" }: { cardholders: Cardholder[], profiles: Profile[], className?: string }) {
+import {
+  type Cardholder,
+  type Profile,
+  CreateCardholderForm,
+} from "@/schemas"
+
+import {
+  insertCardholder,
+  updateCardholder,
+  deleteCardholder,
+} from "@/app/cardholder/actions"
+
+import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
+import CardholderForm from "@/app/cardholder/_components/cardholderForm"
+
+type CardholderManagerProps = {
+  cardholders: Cardholder[];
+  profiles: Profile[];
+  className?: string;
+}
+
+export default function CardholderManager({ 
+  cardholders,
+  profiles,
+  className = "",
+}: CardholderManagerProps) {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Cardholder | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Cardholder | null>(null)
-
-  const form = useForm<CreateCardholderForm>({
-    resolver: zodResolver(CreateCardholderSchema),
-    defaultValues: { name: "", user_id: "" },
-  })
-
+  
   function openAdd() {
     setEditing(null)
-    form.reset({ name: "", user_id: "" })
+    //form.reset({ name: "", user_id: "" })
     setOpen(true)
   }
 
   function openEdit(cardholder: Cardholder) {
     setEditing(cardholder)
-    form.reset({ name: cardholder.name, user_id: cardholder.user_id ?? "" })
+    //form.reset({ name: cardholder.name, user_id: cardholder.user_id ?? "" })
     setOpen(true)
   }
 
@@ -137,51 +131,12 @@ export default function CardholderManager({ cardholders, profiles, className = "
               {editing ? "Edit Cardholder" : "Add Cardholder"}
             </DialogTitle>
           </DialogHeader>
-
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <Controller
-              control={form.control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <div className="space-y-1">
-                  <Label>Name</Label>
-                  <Input {...field} />
-                  {fieldState.error && (
-                    <p className="text-sm text-destructive">{fieldState.error.message}</p>
-                  )}
-                </div>
-              )}
+            <CardholderForm
+              cardHolder={editing}
+              profiles={profiles}
+              onSubmit={onSubmit}
+              isSubmitting={false}
             />
-
-            <Controller
-              control={form.control}
-              name="user_id"
-              render={({ field }) => (
-                <div className="space-y-1">
-                  <Label>User</Label>
-                  <Select value={field.value ?? ""} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {profiles.map(p => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.first_name} {p.last_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            />
-
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
         </DialogContent>
       </Dialog>
 

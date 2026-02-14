@@ -1,4 +1,4 @@
-import CardholderManager from "@/components/cardHolderManager";
+import CardholderManager from "@/app/cardholder/_components/cardholderManager";
 import { getCardholders } from "./actions";
 import { getUserProfiles } from "@/app/admin/users/actions";
 

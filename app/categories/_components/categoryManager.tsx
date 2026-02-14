@@ -1,10 +1,7 @@
-// ./components/categoryAdmin.tsx
-
-"use client"
+// ./app/categories/_components/categoryManager.tsx
+'use client'
 
 import { useMemo, useState } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,20 +10,10 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react"
 
 import {
-    CreateCategorySchema,
     type InsertCategoryForm,
     type Category,
 } from "@/schemas"
@@ -36,6 +23,18 @@ import {
     updateCategory,
     deleteCategory,
 } from "@/app/categories/actions"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia } from "@/components/ui/item"
+import CategoryForm from "@/app/categories/_components/categoryForm"
 
 interface CategoryNode extends Category {
     children?: CategoryNode[]
@@ -58,18 +57,7 @@ function buildTree(categories: Category[]): CategoryNode[] {
     return roots
 }
 
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-
-export default function CategoryManager({ categories }: { categories: Category[] }) {
+export default function CategoryManager({ categories, className = "" }: { categories: Category[], className?: string }) {
     const tree = useMemo(() => buildTree(categories), [categories])
 
     const [open, setOpen] = useState(false)
@@ -77,22 +65,17 @@ export default function CategoryManager({ categories }: { categories: Category[]
     const [parentId, setParentId] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
 
-    const form = useForm<InsertCategoryForm>({
-        resolver: zodResolver(CreateCategorySchema),
-        defaultValues: { name: "", parent_id: null },
-    })
-
     function openAdd(parent?: string) {
         setEditing(null)
         setParentId(parent ?? null)
-        form.reset({ name: "", parent_id: parent ?? null })
+        /* form.reset({ name: "", parent_id: parent ?? null }) */
         setOpen(true)
     }
 
     function openEdit(category: Category) {
         setEditing(category)
         setParentId(category.parent_id)
-        form.reset({ name: category.name, parent_id: category.parent_id })
+        /* form.reset({ name: category.name, parent_id: category.parent_id }) */
         setOpen(true)
     }
 
@@ -112,7 +95,7 @@ export default function CategoryManager({ categories }: { categories: Category[]
     }
 
     return (
-        <div className="max-w-3xl mx-auto p-4">
+        <div className={className}>
             <Card className="">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Categories</CardTitle>
@@ -122,11 +105,11 @@ export default function CategoryManager({ categories }: { categories: Category[]
                 </CardHeader>
 
                 <CardContent className="space-y-2">
-                    <div className="mt-6 space-y-1">
+                    <ItemGroup className="mt-6 space-y-1">
                         {tree.map(cat => (
                             <Collapsible key={cat.id} defaultOpen={false}>
-                                <div className="flex items-center justify-between border px-3 py-2">
-                                    <div className="flex items-center gap-2">
+                                <Item className="flex items-center justify-between border px-3 py-2" variant="outline">
+                                    <ItemMedia>
                                         {cat.children && cat.children.length > 0 ? (
                                             <CollapsibleTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90 transition">
@@ -136,10 +119,11 @@ export default function CategoryManager({ categories }: { categories: Category[]
                                         ) : (
                                             <span className="w-8" />
                                         )}
+                                    </ItemMedia>
+                                    <ItemContent className="flex gap-2">
                                         <span className="font-medium">{cat.name}</span>
-                                    </div>
-
-                                    <div className="flex gap-1">
+                                    </ItemContent>
+                                    <ItemActions className="flex gap-1">
                                         <Button variant="ghost" size="icon" onClick={() => openAdd(cat.id)}>
                                             <Plus className="h-4 w-4" />
                                         </Button>
@@ -149,34 +133,37 @@ export default function CategoryManager({ categories }: { categories: Category[]
                                         <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(cat)}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
-                                    </div>
-                                </div>
-
+                                    </ItemActions>
+                                </Item>
+                                        
                                 {cat.children && cat.children.length > 0 && (
                                     <CollapsibleContent>
-                                        <div className="ml-8 mt-1 space-y-1">
+                                        <ItemGroup className="ml-8 mt-1 space-y-1">
                                             {cat.children.map(child => (
-                                                <div
+                                                <Item
                                                     key={child.id}
-                                                    className="flex items-center justify-between rounded-lg border px-3 py-2"
+                                                    className="flex items-center justify-between px-3 py-2"
+                                                    variant="outline"
                                                 >
-                                                    <span>{child.name}</span>
-                                                    <div className="flex gap-1">
+                                                    <ItemContent>
+                                                        <span>{child.name}</span>
+                                                    </ItemContent>
+                                                    <ItemActions className="flex gap-1">
                                                         <Button variant="ghost" size="icon" onClick={() => openEdit(child)}>
                                                             <Pencil className="h-4 w-4" />
                                                         </Button>
                                                         <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(child)}>
                                                             <Trash2 className="h-4 w-4 text-destructive" />
                                                         </Button>
-                                                    </div>
-                                                </div>
+                                                    </ItemActions>
+                                                </Item>
                                             ))}
-                                        </div>
+                                        </ItemGroup>
                                     </CollapsibleContent>
                                 )}
                             </Collapsible>
                         ))}
-                    </div>
+                    </ItemGroup>
                 </CardContent>
             </Card>
 
@@ -187,52 +174,15 @@ export default function CategoryManager({ categories }: { categories: Category[]
                             {editing ? "Edit Category" : parentId ? "Add Subcategory" : "Add Category"}
                         </DialogTitle>
                     </DialogHeader>
-
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <Controller
-                            control={form.control}
-                            name="name"
-                            render={({ field, fieldState }) => (
-                                <div className="space-y-1">
-                                    <Label>Name</Label>
-                                    <Input {...field} />
-                                    {fieldState.error && (
-                                        <p className="text-sm text-destructive">{fieldState.error.message}</p>
-                                    )}
-                                </div>
-                            )}
+                    <CategoryForm
+                        isCompact={false}
+                        isCreate={!editing}
+                        categories={categories}
+                        category={editing}
+                        onSubmit={onSubmit}
+                        isSubmitting={false}
+                        parentId={parentId}
                         />
-
-                        <Controller
-                            control={form.control}
-                            name="parent_id"
-                            render={({ field }) => (
-                                <div className="space-y-1">
-                                    <Label>Parent</Label>
-                                    <Select value={field.value ?? ""} onValueChange={v => field.onChange(v || null)}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="None" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="null">None</SelectItem>
-                                            {tree.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>
-                                                    {c.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        />
-
-                        <DialogFooter>
-                            <Button variant="outline" type="button" onClick={() => setOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit">Save</Button>
-                        </DialogFooter>
-                    </form>
                 </DialogContent>
             </Dialog>
 

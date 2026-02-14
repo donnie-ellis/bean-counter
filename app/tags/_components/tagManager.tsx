@@ -1,15 +1,12 @@
+// ./app/tags/_components/tagManager.tsx
 "use client"
 
 import { useState } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,29 +19,34 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Pencil, Plus, Trash2 } from "lucide-react"
 
-import { CreateTagSchema, type CreateTagForm, type Tag } from "@/schemas"
+import { type CreateTagForm, type Tag } from "@/schemas"
 import { insertTag, updateTag, deleteTag } from "@/app/tags/actions"
 import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
+import TagForm from "@/app/tags/_components/tagForm"
 
-export default function TagManager({ tags, className = "" }: { tags: Tag[], className?: string }) {
+type TagManagerProps = {
+    tags: Tag[];
+    className?: string;
+}
+
+
+export default function TagManager({
+    tags,
+    className = "",
+}: TagManagerProps) {
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState<Tag | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
 
-    const form = useForm<CreateTagForm>({
-        resolver: zodResolver(CreateTagSchema),
-        defaultValues: { name: "" },
-    })
-
     function openAdd() {
         setEditing(null)
-        form.reset({ name: "" })
+        //form.reset({ name: "" })
         setOpen(true)
     }
 
     function openEdit(tag: Tag) {
         setEditing(tag)
-        form.reset({ name: tag.name })
+        //form.reset({ name: tag.name })
         setOpen(true)
     }
 
@@ -70,6 +72,7 @@ export default function TagManager({ tags, className = "" }: { tags: Tag[], clas
         try {
             await deleteTag(deleteTarget.id)
             toast.success("Tag deleted successfully")
+            setDeleteTarget(null)
         } catch (error) {
             toast.error("Failed to delete tag")
             console.error(error)
@@ -119,28 +122,11 @@ export default function TagManager({ tags, className = "" }: { tags: Tag[], clas
                         <DialogTitle>{editing ? "Edit Tag" : "Add Tag"}</DialogTitle>
                     </DialogHeader>
 
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <Controller
-                            control={form.control}
-                            name="name"
-                            render={({ field, fieldState }) => (
-                                <div className="space-y-1">
-                                    <Label>Name</Label>
-                                    <Input {...field} />
-                                    {fieldState.error && (
-                                        <p className="text-sm text-destructive">{fieldState.error.message}</p>
-                                    )}
-                                </div>
-                            )}
-                        />
-
-                        <DialogFooter>
-                            <Button variant="outline" type="button" onClick={() => setOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit">Save</Button>
-                        </DialogFooter>
-                    </form>
+                    <TagForm
+                        tag={editing}
+                        onSubmit={onSubmit}
+                        isSubmitting={false}
+                    />
                 </DialogContent>
             </Dialog>
 

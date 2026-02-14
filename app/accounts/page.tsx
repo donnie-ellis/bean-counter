@@ -1,4 +1,4 @@
-import AccountsTable from '@/components/AccountsTable';
+import AccountsTable from '@/app/accounts/_components/accountsTable';
 import { requireRole } from '@/lib/auth/requireRole';
 import { getAccounts } from '@/app/accounts/actions';
 

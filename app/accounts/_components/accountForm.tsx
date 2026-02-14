@@ -1,9 +1,9 @@
-// ./app/accounts/add_account_form.tsx
+// ./app/accounts/accountForm.tsx
 
 'use client'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,61 +16,42 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { CreateAccountSchema, type CreateAccountForm, Account } from '@/schemas'
-import { insertAccount } from '@/app/accounts/actions'
-import { getCardholders } from '@/app/cardholder/actions'
+import { CreateAccountSchema, type CreateAccountForm, Account, Cardholder } from '@/schemas'
 import { Checkbox } from '@/components/ui/checkbox'
-
-interface AddAccountFormProps {
-    accounts: Account[];
-    onAccountAdded?: (account: Account) => void;
-    onCancel?: () => void;
-    showSubmitButton?: boolean;
-    submitButtonText?: string;
-    compact?: boolean;
+interface AccountFormProps {
+    account?: Account | null;
+    cardholders: Cardholder[];
+    onSubmit: (data: CreateAccountForm) => Promise<void>;
+    isSubmitting?: boolean;
+    isCreate?: boolean;
+    isCompact?: boolean;
 }
 
-export function CreateAccountForm({ 
-    accounts,
-    onAccountAdded,
-    onCancel,
-    showSubmitButton = true,
-    submitButtonText = 'Create Account',
-    compact = false 
-}: AddAccountFormProps ) {
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [cardholders, setCardholders] = useState<{ id: string; name: string }[]>([])
+export function AccountForm({ 
+    account,
+    cardholders,
+    onSubmit,
+    isSubmitting = false,
+    isCreate = true,
+    isCompact = false
+}: AccountFormProps ) {
 
-    const { control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<CreateAccountForm>({
+    const { control, handleSubmit, setValue, watch } = useForm<CreateAccountForm>({
         resolver: zodResolver(CreateAccountSchema),
         defaultValues: {
-            name: '',
-            type: 'checking',
-            institution: '',
-            credit_limit: null,
-            is_active: true,
+            name: account ? account.name : '',
+            type: account ? account.type : 'checking',
+            institution: account ? account.institution : '',
+            credit_limit: account ? account.credit_limit : null,
+            is_active: account ? account.is_active : true,
             cardholder_id: null,
             account_member_ids: [],
         },
-    })
+    });
 
     const accountType = watch('type')
     const primaryCardholderId = watch('cardholder_id')
     const accountMemberIds = watch('account_member_ids')
-
-    // Fetch cardholders
-    useEffect(() => {
-        async function fetchCardholders() {
-            const data = await getCardholders()
-            if (!data) {
-                console.error('Error fetching cardholders:')
-                toast.error('Error fetching cardholders')
-                return
-            }
-            setCardholders(data)
-        }
-        fetchCardholders()
-    }, [])
 
     //Auto select member when primary is changed
     useEffect(() => {
@@ -82,18 +63,11 @@ export function CreateAccountForm({
         }
     }, [primaryCardholderId]);
 
-    const onSubmit = async (data: CreateAccountForm) => {
-        setIsSubmitting(true)
-        const result = await insertAccount(data)
-        if (!result) {
-            console.error('Error saving account')
-            toast.error('Error saving account')
-            setIsSubmitting(false)
-            return
+    function getSubmitButtonText() {
+        if (isSubmitting) {
+            return isCreate ? 'Creating...' : 'Updating...'
         }
-        toast.success('Account created successfully')
-        reset()
-        setIsSubmitting(false)
+        return isCreate ? 'Create Account' : 'Update Account'
     }
 
     return (
@@ -281,10 +255,7 @@ export function CreateAccountForm({
                     <div className="flex gap-4">
                         <Button type="submit" disabled={isSubmitting} className="flex-1">
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isSubmitting ? 'Creating...' : 'Create Account'}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => reset()} disabled={isSubmitting}>
-                            Reset
+                            {getSubmitButtonText()}
                         </Button>
                     </div>
                 </form>

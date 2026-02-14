@@ -16,49 +16,46 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Category, InsertCategoryForm, CreateCategorySchema } from '@/schemas';
-import { toast } from 'sonner';
-import { createCategory } from '@/app/categories/actions';
 
-interface AddCategoryFormProps {
+interface CategoryFormProps {
+    category?: Category | null;
     categories: Category[];
-    onCategoryAdded?: (category: Category) => void;
-    onCancel?: () => void;
-    showSubmitButton?: boolean;
-    submitButtonText?: string;
-    compact?: boolean;
+    onSubmit: (data: InsertCategoryForm) => Promise<void>;
+    isSubmitting?: boolean;
+    isCreate?: boolean;
+    isCompact?: boolean;
+    parentId?: string | null;
 }
 
-export function AddCategoryForm({
+export default function CategoryForm({
+    category,
     categories,
-    onCategoryAdded,
-    onCancel,
-    showSubmitButton = true,
-    submitButtonText = 'Add Category',
-    compact = false,
-}: AddCategoryFormProps) {
-    const { control, handleSubmit, reset } = useForm<InsertCategoryForm>({
+    onSubmit,
+    isSubmitting = false,
+    isCreate = true,
+    isCompact = false,
+    parentId,
+}: CategoryFormProps) {
+    const { control, handleSubmit } = useForm<InsertCategoryForm>({
         resolver: zodResolver(CreateCategorySchema),
         defaultValues: {
-            name: '',
-            parent_id: null
+            name: category?.name || '',
+            parent_id: parentId|| null
         }
     });
 
     // Get only parent categories (top-level)
     const parentCategories = categories.filter(cat => !cat.parent_id);
 
-    const onSubmit = async (data: InsertCategoryForm) => {
-        try {
-            const newCategory = await createCategory(data);
-            reset();
-            toast.success('Category created successfully');
-            onCategoryAdded?.(newCategory);
-        } catch (error) {
-            toast.error('Failed to create category');
+    const getSubmitButtonText = () => {
+        if (isSubmitting) {
+            return isCreate ? 'Creating...' : 'Updating...';
         }
-    };
+        return isCreate ? 'Create Category' : 'Update Category';
+    }
 
-    if (compact) {
+
+    if (isCompact) {
         return (
             <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
                 <Controller
@@ -136,17 +133,10 @@ export function AddCategoryForm({
             />
 
             <div className="flex gap-2 justify-end">
-                {onCancel && (
-                    <Button type="button" variant="outline" onClick={onCancel}>
-                        Cancel
-                    </Button>
-                )}
-                {showSubmitButton && (
-                    <Button type="submit">
-                        <Plus className="h-4 w-4 mr-2" />
-                        {submitButtonText}
-                    </Button>
-                )}
+                <Button type="submit">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {getSubmitButtonText()}
+                </Button>
             </div>
         </form>
     );
