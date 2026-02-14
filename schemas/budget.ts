@@ -15,6 +15,18 @@ export const BudgetSchema = BaseEntitySchema.extend({
     amount: z.number().positive(),
 });
 
+export const BudgetWithCategorySchema = BudgetSchema.extend({
+    category: z.object({
+        id: z.string().uuid(),
+        name: z.string(),
+        parent: z.object({
+            id: z.string().uuid(),
+            name: z.string(),
+        }).nullable(),
+    }).nullable(),
+}).omit({ category_id: true, created_at: true, user_id: true });
+
+
 export const CreateBudgetSchema = z.object({
     category_id: z.string().uuid().nullable().optional(),
     period: BudgetPeriodSchema.optional(), // DB default 'monthly'
@@ -38,5 +50,6 @@ BudgetSchema.superRefine((data, ctx) => {
 // Types
 export type BudgetPeriod = z.infer<typeof BudgetPeriodSchema>;
 export type Budget = z.infer<typeof BudgetSchema>;
+export type BudgetWithCategory = z.infer<typeof BudgetWithCategorySchema>;
 export type CreateBudgetForm = z.infer<typeof CreateBudgetSchema>;
 
