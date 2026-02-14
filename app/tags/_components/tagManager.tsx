@@ -23,41 +23,56 @@ import { type CreateTagForm, type Tag } from "@/schemas"
 import { insertTag, updateTag, deleteTag } from "@/app/tags/actions"
 import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
 import TagForm from "@/app/tags/_components/tagForm"
+import { getTags } from "@/app/tags/actions"
 
 type TagManagerProps = {
-    tags: Tag[];
+    initialTags: Tag[];
     className?: string;
 }
 
 
 export default function TagManager({
-    tags,
+    initialTags,
     className = "",
 }: TagManagerProps) {
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState<Tag | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [tags, setTags] = useState<Tag[]>(initialTags ?? [])
+
+    async function refreshTags() {
+        setIsLoading(true)
+        const data = await getTags()
+        setTags(data)
+        setIsLoading(false)
+    }
 
     function openAdd() {
         setEditing(null)
-        //form.reset({ name: "" })
         setOpen(true)
     }
 
     function openEdit(tag: Tag) {
         setEditing(tag)
-        //form.reset({ name: tag.name })
         setOpen(true)
     }
 
     async function onSubmit(values: CreateTagForm) {
         try {
             if (editing) {
+                setIsSubmitting(true)
                 await updateTag(editing.id, values)
                 toast.success("Tag updated successfully")
+                await refreshTags()
+                setIsSubmitting(false)
             } else {
+                setIsSubmitting(true)
                 await insertTag(values)
                 toast.success("Tag created successfully")
+                await refreshTags()
+                setIsSubmitting(false)
             }
             setOpen(false)
         } catch (error) {
@@ -71,6 +86,7 @@ export default function TagManager({
 
         try {
             await deleteTag(deleteTarget.id)
+            await refreshTags()
             toast.success("Tag deleted successfully")
             setDeleteTarget(null)
         } catch (error) {
@@ -125,7 +141,7 @@ export default function TagManager({
                     <TagForm
                         tag={editing}
                         onSubmit={onSubmit}
-                        isSubmitting={false}
+                        isSubmitting={isSubmitting}
                     />
                 </DialogContent>
             </Dialog>

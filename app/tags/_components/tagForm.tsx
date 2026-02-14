@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Loader2 } from "lucide-react"
 
 type TagFormProps = {
     tag?: Tag | null;
@@ -27,6 +28,13 @@ export default function TagForm({
         }
     })
 
+    function getSubmitButtonText() {
+        if (isSubmitting) {
+            return tag ? "Updating..." : "Creating..."
+        }
+        return tag ? "Update Tag" : "Create Tag"
+    }
+    
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
             <Controller
@@ -49,7 +57,8 @@ export default function TagForm({
             />
 
             <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Tag"}
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {getSubmitButtonText()}
             </Button>
         </form>
     )
