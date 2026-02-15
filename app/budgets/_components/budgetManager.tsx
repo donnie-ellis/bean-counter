@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { toast } from "sonner"
 
@@ -19,25 +19,17 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Plus } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 
-import { type CreateBudgetForm, type Budget, BudgetWithCategory } from "@/schemas"
-import { getBudgetsWithCategory } from "@/app/budgets/actions"
-import { Item, ItemActions, ItemContent, ItemGroup } from "@/components/ui/item"
+import { type CreateBudgetForm, BudgetWithCategory, Category } from "@/schemas"
+import { deleteBudget, getBudgetsWithCategory, insertBudget, updateBudget } from "@/app/budgets/actions"
 import BudgetTable from "./budgetTable"
+import { getCategoriesWithoutBudget } from "@/app/categories/actions"
+import BudgetForm from "./budgetForm"
 
-type BudgetManagerProps = {
+interface BudgetManagerProps {
     initialBudgets: BudgetWithCategory[];
     className?: string;
-}
-
-
-interface CategoryNode {
-    id: string;
-    name: string;
-    budgets: BudgetWithCategory[];
-    children: CategoryNode[];
-    parentId: string | null;
 }
 
 export default function BudgetManager(
@@ -49,8 +41,17 @@ export default function BudgetManager(
     const [budgets, setBudgets] = useState<BudgetWithCategory[]>(initialBudgets ?? [])
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState<BudgetWithCategory | null>(null)
-    const [deleteTarget, setDeleteTarget] = useState<BudgetWithCategory | null>(null)
-    const [openDelete, setOpenDelete] = useState<BudgetWithCategory | null>(null)
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+    const [categories, setCategories] = useState<Category[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    useEffect(() => {
+        async function fetchData() {
+            setCategories(await getCategoriesWithoutBudget())
+        }
+
+        fetchData()
+    }, [budgets])
 
     async function refreshBudgets() {
         const data = await getBudgetsWithCategory()
@@ -70,16 +71,23 @@ export default function BudgetManager(
     async function onSubmit(values: CreateBudgetForm) {
         try {
             if (editing) {
-                //await updateBudget(editing.id, values)
+                setIsSubmitting(true)
+                await updateBudget(editing.id, values)
+                await refreshBudgets()
+                setIsSubmitting(false)
                 toast.success("Budget updated")
             } else {
-                //await insertBudget(values)
+                setIsSubmitting(true)
+                await insertBudget(values)
+                await refreshBudgets()
+                setIsSubmitting(false)
                 toast.success("Budget created")
             }
             setOpen(false)
             refreshBudgets()
         } catch (error) {
             toast.error("An error occurred")
+            console.error(error)
         }
     }
 
@@ -87,90 +95,71 @@ export default function BudgetManager(
         if (!deleteTarget) return
 
         try {
-            //await deleteBudget(deleteTarget.id)
+            await deleteBudget(deleteTarget)
             await refreshBudgets()
             toast.success("Budget deleted")
         } catch (error) {
             toast.error("An error occurred")
             console.error(error)
-        } finally {
-            setOpenDelete(null)
         }
     }
 
-    // Helper function to build category tree from flat budget list
-    function buildCategoryTree(budgets: BudgetWithCategory[]): CategoryNode[] {
-        const categoryMap = new Map<string, CategoryNode>();
-
-        // First pass: collect all unique categories and their budgets
-        budgets.forEach((budget) => {
-            if (!budget.category) return;
-
-            const categoryId = budget.category.id;
-            const parentId = budget.category.parent?.id ?? null;
-
-            // Create or update the category node
-            if (!categoryMap.has(categoryId)) {
-                categoryMap.set(categoryId, {
-                    id: categoryId,
-                    name: budget.category.name,
-                    budgets: [],
-                    children: [],
-                    parentId: parentId,
-                });
-            }
-
-            // Add budget to this category
-            categoryMap.get(categoryId)!.budgets.push(budget);
-
-            // Ensure parent category exists (even if it has no budgets)
-            if (parentId && budget.category.parent && !categoryMap.has(parentId)) {
-                categoryMap.set(parentId, {
-                    id: parentId,
-                    name: budget.category.parent.name,
-                    budgets: [],
-                    children: [],
-                    parentId: null, // We don't know the grandparent from this data
-                });
-            }
-        });
-
-        // Second pass: build the tree structure
-        const rootCategories: CategoryNode[] = [];
-
-        categoryMap.forEach((node) => {
-            if (node.parentId === null) {
-                // This is a root category
-                rootCategories.push(node);
-            } else {
-                // This is a child category - add it to its parent
-                const parent = categoryMap.get(node.parentId);
-                if (parent) {
-                    parent.children.push(node);
-                } else {
-                    // Parent not found, treat as root
-                    rootCategories.push(node);
-                }
-            }
-        });
-
-        return rootCategories;
-    }
-
     return (
-        <div className={className}>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Budgets</CardTitle>
-                    <Button size="sm" variant="secondary" onClick={openAdd}>
-                        <Plus className="h-4 w-4 mr-1" /> Add
-                    </Button>
-                </CardHeader>
+        <>
+            <div className={className}>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Budgets</CardTitle>
+                        <Button size="sm" variant="secondary" onClick={openAdd}>
+                            <Plus className="h-4 w-4 mr-1" /> Add
+                        </Button>
+                    </CardHeader>
 
-                <CardContent>
-                    <BudgetTable budgets={buildCategoryTree(budgets)} />
-                </CardContent>
-            </Card>
-        </div>
+                    <CardContent>
+                        <BudgetTable budgets={budgets} onDelete={setDeleteTarget} onEdit={openEdit} />
+                    </CardContent>
+                </Card>
+            </div>
+            {/* Edit form */}
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editing ? "Edit Budget" : "Add Budget"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <BudgetForm
+                        budget={editing}
+                        onSubmit={onSubmit}
+                        isSubmitting={isSubmitting}
+                        isCreate={!editing}
+                        categories={categories}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete confirmation dialog */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete category?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the budget.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={confirmDelete}
+                        >
+                            Delete
+                            <Trash2 className="ml-2 h-4 w-4" />
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }

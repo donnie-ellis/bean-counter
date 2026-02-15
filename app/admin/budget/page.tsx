@@ -7,12 +7,15 @@ import { getAllAccountsWithMembers } from "@/app/accounts/actions";
 import TagManager from "@/app/tags/_components/tagManager";
 import AccountManager from "@/app/accounts/_components/accountManager";
 import { getSmallProfiles } from "@/app/profile/actions";
+import BudgetManager from "@/app/budgets/_components/budgetManager";
+import { getBudgetsWithCategory } from "@/app/budgets/actions";
 
 export default async function BudgetAdminPage() {
     const categories = await getCategories();
     const tags = await getTags();
     const accounts = await getAllAccountsWithMembers();
     const profiles = await getSmallProfiles();
+    const budgets =  await getBudgetsWithCategory();
 
     return (
         <main className="lg:flex lg:flex-row px-4 gap-4">
@@ -25,7 +28,9 @@ export default async function BudgetAdminPage() {
             </section>
             <section className="flex flex-col gap-4 basis-1/4">
                 {/* Tags */}
-                <TagManager tags={tags} />
+                <TagManager initialTags={tags} />
+                {/* Budgets */}
+                <BudgetManager initialBudgets={budgets || []} />
             </section>
         </main>
     )
