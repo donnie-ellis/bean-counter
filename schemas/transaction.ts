@@ -1,7 +1,20 @@
 // schemas/transaction.ts
 import { z } from 'zod';
 import { BaseEntitySchema } from '@/schemas/base';
-
+//Interfaces
+export interface TransactionQueryParams {
+    page: number
+    pageSize: number
+    sortBy?: keyof Transaction
+    sortOrder?: "asc" | "desc"
+    search?: string
+  }
+  
+  export interface PaginatedTransactions {
+    data: Transaction[]
+    count: number
+  }
+  
 // Schemas
 // TransactionDirection
 export const TransactionDirectionSchema = z.enum(['credit', 'debit']);

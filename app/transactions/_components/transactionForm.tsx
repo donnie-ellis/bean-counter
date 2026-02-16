@@ -28,7 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Plus } from 'lucide-react';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
@@ -366,11 +366,11 @@ export default function TransactionForm({
                 />
 
             </div>
-
-            <Button type="submit" className="w-full">
-                Save Transaction
-            </Button>
-
+            <div className="flex gap-2 justify-end">
+                <Button type="submit" className="w-full">
+                    {getSubmitButtonText()}
+                </Button>
+            </div>
         </form>
     );
 }

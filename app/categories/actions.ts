@@ -129,9 +129,12 @@ export async function updateCategory(id: string, category: UpdateCategoryForm): 
 }
 
 // Delete a category
-export async function deleteCategory(id: string): Promise<void> {
+export async function deleteCategory(id: string): Promise<string> {
     const supabase = await createClient();
     const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
+    }
     const { data, error } = await supabase
         .from('categories')
         .delete()
@@ -141,5 +144,5 @@ export async function deleteCategory(id: string): Promise<void> {
         throw new Error('Failed to delete category');
     }
     revalidatePath('/budget/categories')
-    return;
+    return id;
 }

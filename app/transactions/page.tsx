@@ -9,9 +9,8 @@ import { getSmallProfiles } from "@/app/profile/actions"
 import { requireRole } from "@/lib/auth/requireRole"
 
 export default async function Transactions() {
-    const currentUserId = (await requireRole('user')).user.id
+    const currentUser = await requireRole('user')
 
-    const initialTransactions = await getTransactions()
     const categories = await getCategories()
     const accounts = await getAccounts()
     const tags = await getTags()
@@ -24,8 +23,7 @@ export default async function Transactions() {
                 accounts={accounts}
                 tags={tags}
                 users={users}
-                initialTransactions={initialTransactions}
-                currentUserId={currentUserId} />
+                currentUserId={currentUser.profile.id} />
         </main>
     )
 }

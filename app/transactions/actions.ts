@@ -1,26 +1,65 @@
 import { getUser } from "@/lib/auth/getUser";
-import { CreateTransactionForm, Transaction } from "@/schemas";
+import { CreateTransactionForm, PaginatedTransactions, Transaction, TransactionQueryParams } from "@/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 // Get all transactions
-export async function getTransactions(): Promise<Transaction[]> {
-    const user = await getUser();
-    if (!user) {
-        throw new Error('Not authenticated');
+export async function getTransactions({
+    page,
+    pageSize,
+    sortBy = "created_at",
+    sortOrder = "desc",
+    search,
+  }: TransactionQueryParams): Promise<PaginatedTransactions> {
+    const user = await getUser()
+    if (!user) throw new Error("Not authenticated")
+  
+    const supabase = await createClient()
+  
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+  
+    let query = supabase
+      .from("transactions")
+      .select(
+        `
+          id,
+          created_at,
+          user_id,
+          account_id,
+          cardholder_id,
+          direction,
+          amount,
+          description,
+          merchant,
+          category_id,
+          occurred_at,
+          is_pending,
+          notes,
+          raw_data
+        `,
+        { count: "exact" }
+      )
+      .order(sortBy, { ascending: sortOrder === "asc" })
+      .range(from, to)
+  
+    if (search) {
+      query = query.or(
+        `description.ilike.%${search}%,merchant.ilike.%${search}%`
+      )
     }
-
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-        .from('transactions')
-        .select('id, created_at, user_id, account_id, cardholder_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
-        .order('created_at', { ascending: false });
+  
+    const { data, error, count } = await query
+  
     if (error || !data) {
-        console.error('Error retrieving transactions: ', error)
-        throw new Error('Failed to retrieve transactions');
+      console.error("Error retrieving transactions:", error)
+      throw new Error("Failed to retrieve transactions")
     }
-    return data;
-}
+  
+    return {
+      data,
+      count: count ?? 0,
+    }
+  }
 
 // Get transactions for a single account
 export async function getTransactionsForAccount(accountId: string): Promise<Transaction[]> {

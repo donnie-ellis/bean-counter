@@ -18,10 +18,11 @@ import { toast } from "sonner"
 import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import TransactionForm from "@/app/transactions/_components/transactionForm"
+import { TransactionsTable } from "./transactionsTable"
+import { DialogDescription } from "@base-ui/react"
 
 interface TransactionManagerProps {
     className?: string
-    initialTransactions?: Transaction[]
     categories?: Category[]
     accounts?: Account[]
     tags?: Tag[]
@@ -31,23 +32,16 @@ interface TransactionManagerProps {
 
 export default function TransactionManager({
     className = '',
-    initialTransactions = [],
     categories = [],
     accounts = [],
     tags = [],
     users = [],
     currentUserId = ''
 }: TransactionManagerProps) {
-    const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions || [])
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState<Transaction | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
-
-    async function refreshTransactions() {
-        const transactions = await getTransactions()
-        setTransactions(transactions)
-    }
 
     function openAdd() {
         setEditing(null)
@@ -63,23 +57,16 @@ export default function TransactionManager({
         try {
             if (editing) {
                 setIsSubmitting(true)
-                const updatedTransaction = await updateTransaction(editing.id, values)
-                setTransactions(prev =>
-                    prev.map(t =>
-                        t.id === updatedTransaction.id ? updatedTransaction : t
-                    )
-                );
+                await updateTransaction(editing.id, values)
                 setIsSubmitting(false)
                 toast.success("Transaction updated")
             } else {
                 setIsSubmitting(true)
-                const insertedTransaction = await insertTransaction(values)
-                setTransactions(prev => [...prev, insertedTransaction])
+                await insertTransaction(values)
                 setIsSubmitting(false)
                 toast.success("Transaction created")
             }
             setOpen(false)
-            refreshTransactions()
         } catch (error) {
             toast.error("An error occurred")
             console.error(error)
@@ -90,8 +77,7 @@ export default function TransactionManager({
         if (!deleteTarget) return
 
         try {
-            const deletedID = await deleteTransaction(deleteTarget)
-            setTransactions(prev => prev.filter(t => t.id !== deletedID))
+            await deleteTransaction(deleteTarget)
             setDeleteTarget(null)
             toast.success("Transaction deleted")
         } catch (error) {
@@ -103,7 +89,7 @@ export default function TransactionManager({
     return (
         <>
             <main className={className}>
-                <Card className="">
+                <Card className="m-4">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Transactions</CardTitle>
                         <Button size="sm" variant="secondary" onClick={openAdd}>
@@ -111,14 +97,19 @@ export default function TransactionManager({
                         </Button>
                     </CardHeader>
                     <CardContent className="space-y-2">
+                        <TransactionsTable
+                            onEdit={openEdit}
+                            onDelete={setDeleteTarget}
+                        />
                     </CardContent>
                 </Card>
                 {/* Implement UI for listing, adding, editing, and deleting transactions */}
             </main>
 
             {/* Edit form */}
-            <Dialog open={open} onOpenChange={setOpen}>
+            <Dialog open={open} onOpenChange={setOpen} >
                 <DialogContent className="sm:max-w-md">
+                    
                     <DialogHeader>
                         <DialogTitle>
                             {editing ? "Edit Transaction" : "Add Transaction"}
