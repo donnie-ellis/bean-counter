@@ -1,7 +1,6 @@
 import { getUser } from "@/lib/auth/getUser";
-import { Transaction } from "@/schemas";
+import { CreateTransactionForm, Transaction } from "@/schemas";
 import { createClient } from "@/lib/supabase/server";
-
 
 // Get all transactions
 export async function getTransactions(): Promise<Transaction[]> {
@@ -86,7 +85,7 @@ export async function getTransaction(id: string): Promise<Transaction> {
 }
 
 // Insert a transaction
-export async function insertTransaction(transaction: Transaction): Promise<Transaction> {
+export async function insertTransaction(transaction: CreateTransactionForm): Promise<Transaction> {
     const user = await getUser();
     if (!user) {
         throw new Error('Not authenticated');
@@ -105,7 +104,7 @@ export async function insertTransaction(transaction: Transaction): Promise<Trans
 }
 
 // Update a transaction
-export async function updateTransaction(id: string, transaction: Transaction): Promise<Transaction> {
+export async function updateTransaction(id: string, transaction: CreateTransactionForm): Promise<Transaction> {
     const user = await getUser();
     if (!user) {
         throw new Error('Not authenticated');
@@ -121,11 +120,11 @@ export async function updateTransaction(id: string, transaction: Transaction): P
         console.error('Error updating transaction: ', error)
         throw new Error('Failed to update transaction');
     }
-    return data;
+    return data as Transaction;
 }
 
 // Delete a transaction
-export async function deleteTransaction(id: string): Promise<void> {
+export async function deleteTransaction(id: string): Promise<string> {
     const user = await getUser();
     if (!user) {
         throw new Error('Not authenticated');
@@ -139,5 +138,5 @@ export async function deleteTransaction(id: string): Promise<void> {
         console.error('Error deleting transaction: ', error)
         throw new Error('Failed to delete transaction');
     }
-    return;
+    return id;
 }

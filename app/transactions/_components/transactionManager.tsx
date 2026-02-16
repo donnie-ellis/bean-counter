@@ -1,0 +1,166 @@
+// ./app/transactions/_components/transactionManager.tsx
+
+'use client'
+import { useState } from "react"
+import {
+    CreateTransactionForm,
+    Transaction,
+    Category,
+    Account,
+    Tag,
+    SmallProfile
+} from "@/schemas"
+import { deleteTransaction, getTransactions, insertTransaction, updateTransaction } from "@/app/transactions/actions"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import { Plus, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import TransactionForm from "@/app/transactions/_components/transactionForm"
+
+interface TransactionManagerProps {
+    className?: string
+    initialTransactions?: Transaction[]
+    categories?: Category[]
+    accounts?: Account[]
+    tags?: Tag[]
+    users?: SmallProfile[]
+    currentUserId?: string
+}
+
+export default function TransactionManager({
+    className = '',
+    initialTransactions = [],
+    categories = [],
+    accounts = [],
+    tags = [],
+    users = [],
+    currentUserId = ''
+}: TransactionManagerProps) {
+    const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions || [])
+    const [open, setOpen] = useState(false)
+    const [editing, setEditing] = useState<Transaction | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+
+    async function refreshTransactions() {
+        const transactions = await getTransactions()
+        setTransactions(transactions)
+    }
+
+    function openAdd() {
+        setEditing(null)
+        setOpen(true)
+    }
+
+    const openEdit = (transaction: Transaction) => {
+        setEditing(transaction)
+        setOpen(true)
+    }
+
+    async function onSubmit(values: CreateTransactionForm) {
+        try {
+            if (editing) {
+                setIsSubmitting(true)
+                const updatedTransaction = await updateTransaction(editing.id, values)
+                setTransactions(prev =>
+                    prev.map(t =>
+                        t.id === updatedTransaction.id ? updatedTransaction : t
+                    )
+                );
+                setIsSubmitting(false)
+                toast.success("Transaction updated")
+            } else {
+                setIsSubmitting(true)
+                const insertedTransaction = await insertTransaction(values)
+                setTransactions(prev => [...prev, insertedTransaction])
+                setIsSubmitting(false)
+                toast.success("Transaction created")
+            }
+            setOpen(false)
+            refreshTransactions()
+        } catch (error) {
+            toast.error("An error occurred")
+            console.error(error)
+        }
+    }
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+
+        try {
+            const deletedID = await deleteTransaction(deleteTarget)
+            setTransactions(prev => prev.filter(t => t.id !== deletedID))
+            setDeleteTarget(null)
+            toast.success("Transaction deleted")
+        } catch (error) {
+            toast.error("An error occurred")
+            console.error(error)
+        }
+    }
+
+    return (
+        <>
+            <main className={className}>
+                <Card className="">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Transactions</CardTitle>
+                        <Button size="sm" variant="secondary" onClick={openAdd}>
+                            <Plus className="h-4 w-4 mr-1" /> Add
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                    </CardContent>
+                </Card>
+                {/* Implement UI for listing, adding, editing, and deleting transactions */}
+            </main>
+
+            {/* Edit form */}
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editing ? "Edit Transaction" : "Add Transaction"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <TransactionForm
+                        transaction={editing}
+                        categories={categories}
+                        accounts={accounts}
+                        tags={tags}
+                        users={users}
+                        onSubmit={onSubmit}
+                        isSubmitting={isSubmitting}
+                        isCreate={!editing}
+                        currentUserId={currentUserId}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete confirmation dialog */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete category?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the budget.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={confirmDelete}
+                        >
+                            Delete
+                            <Trash2 className="ml-2 h-4 w-4" />
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+        </>
+    )
+}
