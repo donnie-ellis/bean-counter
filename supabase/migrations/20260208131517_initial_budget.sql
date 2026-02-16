@@ -4,7 +4,7 @@
 
 create type account_type as enum ('checking', 'savings', 'credit', 'cash', 'investment');
 
-create type transaction_direction as enum ('outflow', 'inflow', 'transfer');
+create type transaction_direction as enum ('debit', 'credit');
 
 create type recurrence_frequency as enum ('daily', 'weekly', 'monthly', 'yearly');
 

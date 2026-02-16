@@ -28,16 +28,19 @@ import {
 
 import { MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { getTransactions } from "@/app/transactions/actions"
-import { Transaction } from "@/schemas"
+import { Account, Transaction } from "@/schemas"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface TransactionsTableProps {
   onEdit?: (transaction: Transaction) => void
   onDelete?: (id: string) => void
+  accounts: Account[]
 }
 
 export function TransactionsTable({
   onEdit,
   onDelete,
+  accounts
 }: TransactionsTableProps) {
   const [data, setData] = useState<Transaction[]>([])
   const [page, setPage] = useState(1)
@@ -46,6 +49,7 @@ export function TransactionsTable({
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<keyof Transaction>("created_at")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [account_id, setAccount_id] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -55,12 +59,13 @@ export function TransactionsTable({
         search,
         sortBy,
         sortOrder,
+        account_id: account_id === "all" ? undefined : account_id || undefined,
       })
       setData(result.data)
       setTotal(result.count)
     }
     fetchData()
-  }, [page, pageSize, search, sortBy, sortOrder])
+  }, [page, pageSize, search, sortBy, sortOrder, account_id])
 
   const columns: ColumnDef<Transaction>[] = [
     {
@@ -155,6 +160,28 @@ export function TransactionsTable({
           }}
           className="max-w-sm"
         />
+      
+      {/* Account filter (optional) */}
+        <Select
+            value={account_id || undefined}
+            onValueChange={(value) => {
+              setPage(1)
+              setAccount_id(value || null)
+            }}
+          >
+            <SelectTrigger className="w-45">
+              <SelectValue placeholder="Filter by account" />
+            </SelectTrigger>
+  
+            <SelectContent>
+              <SelectItem value={"all"}>All Accounts</SelectItem>
+              {accounts.map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
       </div>
 
       {/* Table */}

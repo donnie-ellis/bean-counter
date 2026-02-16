@@ -1,6 +1,18 @@
+'use server'
 import { getUser } from "@/lib/auth/getUser";
-import { CreateTransactionForm, PaginatedTransactions, Transaction, TransactionQueryParams } from "@/schemas";
+import { CreateTransactionForm, PaginatedTransactions, Transaction } from "@/schemas";
 import { createClient } from "@/lib/supabase/server";
+
+export interface TransactionQueryParams {
+    page: number
+    pageSize: number
+    sortBy?: keyof Transaction
+    sortOrder?: "asc" | "desc"
+    search?: string
+    account_id?: string
+  }
+  
+
 
 // Get all transactions
 export async function getTransactions({
@@ -9,6 +21,7 @@ export async function getTransactions({
     sortBy = "created_at",
     sortOrder = "desc",
     search,
+    account_id
   }: TransactionQueryParams): Promise<PaginatedTransactions> {
     const user = await getUser()
     if (!user) throw new Error("Not authenticated")
@@ -46,6 +59,10 @@ export async function getTransactions({
       query = query.or(
         `description.ilike.%${search}%,merchant.ilike.%${search}%`
       )
+    }
+
+    if (account_id) {
+      query = query.eq('account_id', account_id)
     }
   
     const { data, error, count } = await query

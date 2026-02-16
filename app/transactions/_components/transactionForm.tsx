@@ -8,7 +8,6 @@ import {
     CreateTransactionForm,
     CreateTransactionSchema,
     Transaction,
-    Tag,
     Account,
     Category,
     SmallProfile
@@ -23,18 +22,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
     categories: Category[];
     accounts: Account[];
-    tags: Tag[];
     users: SmallProfile[];
     onSubmit: (data: CreateTransactionForm) => Promise<void>;
     isSubmitting?: boolean;
@@ -47,7 +44,6 @@ export default function TransactionForm({
     transaction,
     categories,
     accounts,
-    tags,
     users,
     onSubmit,
     isSubmitting = false,

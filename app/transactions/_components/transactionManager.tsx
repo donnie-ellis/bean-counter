@@ -7,10 +7,9 @@ import {
     Transaction,
     Category,
     Account,
-    Tag,
     SmallProfile
 } from "@/schemas"
-import { deleteTransaction, getTransactions, insertTransaction, updateTransaction } from "@/app/transactions/actions"
+import { deleteTransaction, insertTransaction, updateTransaction } from "@/app/transactions/actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -25,7 +24,6 @@ interface TransactionManagerProps {
     className?: string
     categories?: Category[]
     accounts?: Account[]
-    tags?: Tag[]
     users?: SmallProfile[]
     currentUserId?: string
 }
@@ -34,7 +32,6 @@ export default function TransactionManager({
     className = '',
     categories = [],
     accounts = [],
-    tags = [],
     users = [],
     currentUserId = ''
 }: TransactionManagerProps) {
@@ -100,6 +97,7 @@ export default function TransactionManager({
                         <TransactionsTable
                             onEdit={openEdit}
                             onDelete={setDeleteTarget}
+                            accounts={accounts}
                         />
                     </CardContent>
                 </Card>
@@ -119,7 +117,6 @@ export default function TransactionManager({
                         transaction={editing}
                         categories={categories}
                         accounts={accounts}
-                        tags={tags}
                         users={users}
                         onSubmit={onSubmit}
                         isSubmitting={isSubmitting}
