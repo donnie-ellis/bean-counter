@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
     CreateTransactionForm,
-    CreateTransactionSchema,
+    CreateTransactionFormSchema,
     Transaction,
     Account,
     Category,
@@ -52,10 +52,10 @@ export default function TransactionForm({
     currentUserId = ''
 }: TransactionFormProps) {
     const { control, handleSubmit } = useForm<CreateTransactionForm>({
-        resolver: zodResolver(CreateTransactionSchema),
+        resolver: zodResolver(CreateTransactionFormSchema),
         defaultValues: {
             account_id: transaction?.account_id || '',
-            cardholder_id: transaction?.cardholder_id ?? currentUserId,
+            member_id: transaction?.member_id ?? currentUserId,
             direction: transaction?.direction || 'debit',
             amount: transaction?.amount || 0,
             description: transaction?.description || null,
@@ -100,6 +100,7 @@ export default function TransactionForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Account</FieldLabel>
                             <Select
+                                disabled={isSubmitting || accounts.length === 0}
                                 value={field.value}
                                 onValueChange={field.onChange}
                             >
@@ -127,6 +128,7 @@ export default function TransactionForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Category</FieldLabel>
                             <Select
+                                disabled={isSubmitting || categories.length === 0}
                                 value={field.value ?? ''}
                                 onValueChange={(v) => field.onChange(v || null)}
                             >
@@ -148,12 +150,13 @@ export default function TransactionForm({
 
                 {/* Cardholder */}
                 <Controller
-                    name="cardholder_id"
+                    name="member_id"
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Cardholder</FieldLabel>
                             <Select
+                                disabled={isSubmitting}
                                 value={field.value ?? ''}
                                 onValueChange={(v) => field.onChange(v || null)}
                             >
@@ -185,6 +188,7 @@ export default function TransactionForm({
 
                             <div className="flex rounded-md border overflow-hidden w-full">
                                 <Button
+                                    disabled={isSubmitting}
                                     type="button"
                                     variant="ghost"
                                     onClick={() => field.onChange("debit")}
@@ -228,6 +232,7 @@ export default function TransactionForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Amount</FieldLabel>
                             <Input
+                                disabled={isSubmitting}
                                 type="number"
                                 step="0.01"
                                 min="0"
@@ -254,6 +259,7 @@ export default function TransactionForm({
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
+                                        disabled={isSubmitting}
                                         type="button"
                                         variant="outline"
                                         className="w-full justify-start text-left font-normal whitespace-normal h-auto py-2"
@@ -269,6 +275,7 @@ export default function TransactionForm({
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
                                     <Calendar
+                                        disabled={isSubmitting}
                                         mode="single"
                                         selected={field.value}
                                         onSelect={(date) => {
@@ -312,6 +319,7 @@ export default function TransactionForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Description</FieldLabel>
                             <Input
+                                disabled={isSubmitting}
                                 placeholder="Transaction description..."
                                 value={field.value ?? ''}
                                 onChange={(e) => field.onChange(e.target.value || null)}
@@ -331,6 +339,7 @@ export default function TransactionForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Merchant</FieldLabel>
                             <Input
+                                disabled={isSubmitting}
                                 placeholder="Merchant name..."
                                 value={field.value ?? ''}
                                 onChange={(e) => field.onChange(e.target.value || null)}
@@ -350,6 +359,7 @@ export default function TransactionForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>Notes</FieldLabel>
                             <Textarea
+                                disabled={isSubmitting}
                                 placeholder="Optional notes..."
                                 value={field.value ?? ''}
                                 onChange={(e) => field.onChange(e.target.value || null)}
@@ -363,7 +373,7 @@ export default function TransactionForm({
 
             </div>
             <div className="flex gap-2 justify-end">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {getSubmitButtonText()}
                 </Button>
             </div>

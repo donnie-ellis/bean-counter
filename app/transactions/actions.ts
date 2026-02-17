@@ -1,6 +1,6 @@
 'use server'
 import { getUser } from "@/lib/auth/getUser";
-import { CreateTransactionForm, PaginatedTransactions, Transaction } from "@/schemas";
+import { CreateTransactionForm, PaginatedTransactions, Transaction, CreateTransactionSchema } from "@/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export interface TransactionQueryParams {
@@ -37,7 +37,7 @@ export async function getTransactions({
           created_at,
           user_id,
           account_id,
-          cardholder_id,
+          member_id,
           direction,
           amount,
           description,
@@ -86,7 +86,7 @@ export async function getTransactionsForAccount(accountId: string): Promise<Tran
 
     const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, user_id, account_id, cardholder_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
+        .select('id, created_at, user_id, account_id, member_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
         .eq('account_id', accountId)
         .order('created_at', { ascending: false });
     if (error || !data) {
@@ -107,7 +107,7 @@ export async function getTransactionsForCategory(categoryId: string): Promise<Tr
 
     const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, user_id, account_id, cardholder_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
+        .select('id, created_at, user_id, account_id, member_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
         .eq('category_id', categoryId)
         .order('created_at', { ascending: false });
     if (error || !data) {
@@ -127,7 +127,7 @@ export async function getTransaction(id: string): Promise<Transaction> {
 
     const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, user_id, account_id, cardholder_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
+        .select('id, created_at, user_id, account_id, member_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
         .eq('id', id)
         .order('created_at', { ascending: false })
         .single();
@@ -145,9 +145,17 @@ export async function insertTransaction(transaction: CreateTransactionForm): Pro
         throw new Error('Not authenticated');
     }
     const supabase = await createClient();
+
+    //Validate the form data
+    const validatedInput = CreateTransactionSchema.safeParse({ ...transaction, user_id: user.id });
+    if (!validatedInput.success) {
+        console.error('Validation failed: ', validatedInput.error)
+        throw new Error('Validation failed');
+    }
+
     const { data, error } = await supabase
         .from('transactions')
-        .insert(transaction)
+        .insert(validatedInput.data)
         .select()
         .single();
     if (error || !data) {

@@ -23,7 +23,6 @@ export const TransactionDirectionSchema = z.enum(['credit', 'debit']);
 export const TransactionSchema = BaseEntitySchema.extend({
     user_id: z.string().uuid(),
     account_id: z.string().uuid(),
-    cardholder_id: z.string().uuid().nullable(),
     direction: TransactionDirectionSchema,
     amount: z.number().positive(),
     description: z.string().trim().max(255).nullable(),
@@ -33,22 +32,13 @@ export const TransactionSchema = BaseEntitySchema.extend({
     is_pending: z.boolean(),
     notes: z.string().nullable(),
     raw_data: z.record(z.string(), z.any()).nullable(),
+    member_id : z.string().uuid(),
 });
 
 // Create Transaction
-export const CreateTransactionSchema = z.object({
-    account_id: z.string().uuid(),
-    cardholder_id: z.string().uuid().nullable().optional(),
-    direction: TransactionDirectionSchema,
-    amount: z.number().positive(),
-    description: z.string().trim().max(255).nullable().optional(),
-    merchant: z.string().trim().max(255).nullable().optional(),
-    category_id: z.string().uuid().nullable().optional(),
-    occurred_at: z.date(),
-    is_pending: z.boolean().optional(), // DB default false
-    notes: z.string().nullable().optional(),
-    raw_data: z.record(z.string(), z.any()).nullable().optional(),
-});
+export const CreateTransactionSchema = TransactionSchema.omit({ id: true, created_at: true, raw_data: true });
+
+export const CreateTransactionFormSchema = TransactionSchema.omit({ id: true, created_at: true, user_id: true, raw_data: true });
 
 // Update Transaction
 export const UpdateTransactionSchema = CreateTransactionSchema.partial();
@@ -59,7 +49,7 @@ export const TransactionWithRelationsSchema = TransactionSchema.extend({
         id: z.string().uuid(),
         name: z.string(),
     }).optional(),
-    cardholder: z.object({
+    member: z.object({
         id: z.string().uuid(),
         name: z.string(),
     }).optional(),
@@ -83,5 +73,5 @@ TransactionSchema.superRefine((data, ctx) => {
 // Types
 export type TransactionDirection = z.infer<typeof TransactionDirectionSchema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
-export type CreateTransactionForm = z.infer<typeof CreateTransactionSchema>;
+export type CreateTransactionForm = z.infer<typeof CreateTransactionFormSchema>;
 export type UpdateTransactionForm = z.infer<typeof UpdateTransactionSchema>;

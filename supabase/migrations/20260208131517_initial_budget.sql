@@ -32,19 +32,10 @@ create table public.accounts (
 -- ===== Account Members =====
 create table public.account_members (
     account_id uuid references public.accounts (id) on delete cascade,
-    user_id uuid references profiles (id) on delete cascade,
+    user_id uuid not null references profiles (id) on delete cascade,
     role account_role not null default 'viewer',
     created_at timestamptz default now(),
     primary key (account_id, user_id)
-);
-
--- ===== Cardholders =====
-create table public.cardholders (
-    id uuid primary key default gen_random_uuid (),
-    user_id uuid not null references profiles (id) on delete cascade,
-    name text not null,
-    created_at timestamptz default now(),
-    unique (user_id, name)
 );
 
 -- ====== Categories =====
@@ -72,8 +63,8 @@ create table public.tags (
 create table public.transactions (
     id uuid primary key default gen_random_uuid (),
     user_id uuid not null references profiles (id) on delete cascade,
+    member_id uuid not null,
     account_id uuid not null references public.accounts (id),
-    cardholder_id uuid references public.cardholders (id),
     direction transaction_direction not null,
     amount numeric not null check (amount > 0),
     description text,
@@ -83,7 +74,11 @@ create table public.transactions (
     is_pending boolean default false,
     notes text,
     raw_data jsonb,
-    created_at timestamptz default now()
+    created_at timestamptz default now(),
+    constraint fk_transaction_account_member 
+      foreign key (account_id, member_id) 
+      references public.account_members (account_id, user_id) 
+      on delete cascade
 );
 
 alter table public.transactions enable row level security;
@@ -164,19 +159,18 @@ create or replace function public.get_signed_amount(
   direction transaction_direction,
   amt numeric
 )
-returns numeric as $$
+returns numeric
+language plpgsql
+as $$
 begin
-  if acc_type = 'credit' then
-    if direction = 'outflow' then return amt;
-    else return -amt;
-    end if;
-  else
-    if direction = 'inflow' then return amt;
-    else return -amt;
-    end if;
-  end if;
+  return case
+    when acc_type = 'credit' and direction = 'debit' then amt
+    when acc_type = 'credit' and direction = 'credit' then -amt
+    when acc_type <> 'credit' and direction = 'credit' then amt
+    else -amt
+  end;
 end;
-$$ language plpgsql;
+$$;
 
 create or replace function public.update_account_balance()
 returns trigger as $$
@@ -373,13 +367,6 @@ update using (
 create policy "Account members delete" on public.account_members for delete using (
     public.is_account_owner (account_id)
 );
-
--- Cardholders table
-alter table public.cardholders enable row level security;
-
-create policy "Cardholder access" on public.cardholders for all using (user_id = auth.uid ())
-with
-    check (user_id = auth.uid ());
 
 -- Transaction Table
 create policy "Transaction read access" on public.transactions for
