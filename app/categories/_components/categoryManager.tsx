@@ -59,7 +59,6 @@ function buildTree(categories: Category[]): CategoryNode[] {
 
 export default function CategoryManager({ categories, className = "" }: { categories: Category[], className?: string }) {
     const tree = useMemo(() => buildTree(categories), [categories])
-
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState<Category | null>(null)
     const [parentId, setParentId] = useState<string | null>(null)
@@ -68,14 +67,12 @@ export default function CategoryManager({ categories, className = "" }: { catego
     function openAdd(parent?: string) {
         setEditing(null)
         setParentId(parent ?? null)
-        /* form.reset({ name: "", parent_id: parent ?? null }) */
         setOpen(true)
     }
 
     function openEdit(category: Category) {
         setEditing(category)
         setParentId(category.parent_id)
-        /* form.reset({ name: category.name, parent_id: category.parent_id }) */
         setOpen(true)
     }
 
