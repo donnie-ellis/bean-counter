@@ -11,8 +11,6 @@ export interface TransactionQueryParams {
     search?: string
     account_id?: string
   }
-  
-
 
 // Get all transactions
 export async function getTransactions({
