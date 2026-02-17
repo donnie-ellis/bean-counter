@@ -2,12 +2,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { Account,
     CreateAccountSchema,
-    UpdateAccountMemberSchema,
     UpdateAccountSchema,
     type CreateAccountForm,
     CreateAccountMemberSchema,
     CreateAccountFormSchema,
-    AccountRoleSchema,
     AccountWithMembers,
     AccountMember
 } from "@/schemas";
@@ -115,7 +113,7 @@ export async function insertAccount(input: CreateAccountForm): Promise<AccountWi
         const { data: membersData, error: membersError } = await supabase
             .from('account_members')
             .insert(validatedMembers)
-            .select('id, user_id, role');
+            .select('id:account_id, user_id, role');
         
         if (membersError) {
             console.error('Error inserting account members:', membersError);

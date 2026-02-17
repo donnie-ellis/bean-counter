@@ -76,6 +76,7 @@ export function AccountForm({
                             value={field.value ?? ''}
                             className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
                             aria-invalid={fieldState.invalid}
+                            disabled={isSubmitting}
                         />
                         {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
                     </Field>
@@ -89,7 +90,7 @@ export function AccountForm({
                 render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="type">Account Type</FieldLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
+                        <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
                             <SelectTrigger
                                 id="type"
                                 className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
@@ -161,6 +162,7 @@ export function AccountForm({
                                                         {profile.first_name} {profile.last_name}
                                                     </FieldLabel>
                                                     <Switch
+                                                        disabled={isSubmitting}
                                                         id={`account_member_${profile.id}`}
                                                         checked={isSelected}
                                                         onCheckedChange={(checked) => 
@@ -174,6 +176,7 @@ export function AccountForm({
                                                     <div className='ml-6 pl-4 border-l-2 pb-2'>
                                                         <FieldLabel className='text-sm mb-2 block text-muted-foreground'>Role</FieldLabel>
                                                         <RadioGroup
+                                                            disabled={isSubmitting}
                                                             value={member.role}
                                                             onValueChange={(role) => 
                                                                 handleRoleChange(profile.id, role as AccountRole)
@@ -246,6 +249,7 @@ export function AccountForm({
                     <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="institution">Institution</FieldLabel>
                         <Input
+                            disabled={isSubmitting}
                             id="institution"
                             placeholder="e.g., Bank of America"
                             {...field}
@@ -266,6 +270,7 @@ export function AccountForm({
                         <Field data-invalid={fieldState.invalid}>
                             <FieldLabel htmlFor="credit_limit">Credit Limit</FieldLabel>
                             <Input
+                                disabled={isSubmitting}
                                 id="credit_limit"
                                 type="number"
                                 step="0.01"
@@ -292,6 +297,7 @@ export function AccountForm({
                     <Field orientation="horizontal" className='flex items-center justify-between'>
                         <FieldLabel htmlFor='is_active'>Enable the account</FieldLabel>
                         <Switch
+                            disabled={isSubmitting}
                             id="is_active"
                             checked={field.value}
                             onCheckedChange={(val) => field.onChange(val)}

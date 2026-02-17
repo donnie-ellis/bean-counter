@@ -55,6 +55,8 @@ export default function AccountManager({
     async function confirmDelete() {
         if (!deleteTarget) return
         await deleteAccount(deleteTarget.id)
+        setAccounts((prev) => prev.filter((acc) => acc.id !== deleteTarget.id))
+        toast.success("Account deleted")
         await refreshAccounts()
         setDeleteTarget(null)
     }
@@ -62,15 +64,15 @@ export default function AccountManager({
     async function onSubmit(values: CreateAccountForm) {
         if (editing) {
             setIsSubmitting(true)
-            await updateAccount(editing.id, values)
+            const result = await updateAccount(editing.id, values)
+            setAccounts((prev) => prev.map((acc) => acc.id === result.id ? result : acc))
             toast.success("Account updated")
-            await refreshAccounts()
             setIsSubmitting(false)
         } else {
             setIsSubmitting(true)
-            await insertAccount(values)
+            const result = await insertAccount(values)
+            setAccounts((prev) => [...prev, result])
             toast.success("Account created")
-            await refreshAccounts()
             setIsSubmitting(false)
         }
         setOpen(false)
