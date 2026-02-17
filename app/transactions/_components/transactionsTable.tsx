@@ -1,29 +1,29 @@
 "use client"
 
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
 } from "@tanstack/react-table"
-import { useEffect, useState } from "react"
+import { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from "react"
 
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 
 import { MoreVertical, Pencil, Trash2 } from "lucide-react"
@@ -32,219 +32,231 @@ import { Account, Transaction } from "@/schemas"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface TransactionsTableProps {
-  onEdit?: (transaction: Transaction) => void
-  onDelete?: (id: string) => void
-  accounts: Account[]
+    onEdit?: (transaction: Transaction) => void
+    onDelete?: (id: string) => void
+    accounts: Account[]
 }
 
-export function TransactionsTable({
-  onEdit,
-  onDelete,
-  accounts
-}: TransactionsTableProps) {
-  const [data, setData] = useState<Transaction[]>([])
-  const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
-  const [total, setTotal] = useState(0)
-  const [search, setSearch] = useState("")
-  const [sortBy, setSortBy] = useState<keyof Transaction>("created_at")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
-  const [account_id, setAccount_id] = useState<string | null>(null)
+export interface TransactionsTableRef {
+    refetch: () => void
+}
 
-  useEffect(() => {
-    async function fetchData() {
-      const result = await getTransactions({
-        page,
-        pageSize,
-        search,
-        sortBy,
-        sortOrder,
-        account_id: account_id === "all" ? undefined : account_id || undefined,
-      })
-      setData(result.data)
-      setTotal(result.count)
-    }
-    fetchData()
-  }, [page, pageSize, search, sortBy, sortOrder, account_id])
+export const TransactionsTable = forwardRef<TransactionsTableRef, TransactionsTableProps>((
+    { onEdit, onDelete, accounts },
+    ref
+) => {
+    const [data, setData] = useState<Transaction[]>([])
+    const [page, setPage] = useState(1)
+    const [pageSize] = useState(20)
+    const [total, setTotal] = useState(0)
+    const [search, setSearch] = useState("")
+    const [sortBy, setSortBy] = useState<keyof Transaction>("created_at")
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+    const [account_id, setAccount_id] = useState<string | null>(null)
 
-  const columns: ColumnDef<Transaction>[] = [
-    {
-      accessorKey: "occurred_at",
-      header: "Date",
-      cell: ({ row }) =>
-        new Date(row.original.occurred_at).toLocaleString(),
-    },
-    {
-      accessorKey: "merchant",
-      header: "Merchant",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ row }) => {
-        const t = row.original
-        const color =
-          t.direction === "debit"
-            ? "text-destructive"
-            : "text-emerald-600"
 
-        return (
-          <span className={`font-medium ${color}`}>
-            ${t.amount.toFixed(2)}
-          </span>
-        )
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const transaction = row.original
+    const fetchData = useCallback(async () => {
+        const result = await getTransactions({
+            page,
+            pageSize,
+            search,
+            sortBy,
+            sortOrder,
+            account_id: account_id === "all" ? undefined : account_id || undefined,
+        })
+        setData(result.data)
+        setTotal(result.count)
+    }, [page, pageSize, search, sortBy, sortOrder, account_id])
 
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+    useEffect(() => {
 
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => onEdit?.(transaction)}
-              >
-                <Pencil className="ml-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
+        fetchData()
+    }, [fetchData])
 
-              <DropdownMenuItem
-                onClick={() => onDelete?.(transaction.id)}
-                className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
-              >
-                <Trash2 className="ml-2 h-4 w-4 text-destructive" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-    },
-  ]
+    useImperativeHandle(ref, () => ({
+        refetch: fetchData
+    }))
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
+    const columns: ColumnDef<Transaction>[] = [
+        {
+            accessorKey: "occurred_at",
+            header: "Date",
+            cell: ({ row }) =>
+                new Date(row.original.occurred_at).toLocaleString(),
+        },
+        {
+            accessorKey: "merchant",
+            header: "Merchant",
+        },
+        {
+            accessorKey: "description",
+            header: "Description",
+        },
+        {
+            accessorKey: "amount",
+            header: "Amount",
+            cell: ({ row }) => {
+                const t = row.original
+                const color =
+                    t.direction === "debit"
+                        ? "text-destructive"
+                        : "text-emerald-600"
 
-  const totalPages = Math.ceil(total / pageSize)
+                return (
+                    <span className={`font-medium ${color}`}>
+                        ${t.amount.toFixed(2)}
+                    </span>
+                )
+            },
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const transaction = row.original
 
-  return (
-    <div className="space-y-4">
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                            >
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
 
-      {/* Search */}
-      <div className="flex justify-between items-center gap-4">
-        <Input
-          placeholder="Search merchant or description..."
-          value={search}
-          onChange={(e) => {
-            setPage(1)
-            setSearch(e.target.value)
-          }}
-          className="max-w-sm"
-        />
-      
-      {/* Account filter (optional) */}
-        <Select
-            value={account_id || undefined}
-            onValueChange={(value) => {
-              setPage(1)
-              setAccount_id(value || null)
-            }}
-          >
-            <SelectTrigger className="w-45">
-              <SelectValue placeholder="Filter by account" />
-            </SelectTrigger>
-  
-            <SelectContent>
-              <SelectItem value={"all"}>All Accounts</SelectItem>
-              {accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-      </div>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onClick={() => onEdit?.(transaction)}
+                            >
+                                <Pencil className="ml-2 h-4 w-4" />
+                                Edit
+                            </DropdownMenuItem>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
+                            <DropdownMenuItem
+                                onClick={() => onDelete?.(transaction.id)}
+                                className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                            >
+                                <Trash2 className="ml-2 h-4 w-4 text-destructive" />
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )
+            },
+        },
+    ]
 
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+    const table = useReactTable({
+        data,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+    })
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </span>
+    const totalPages = Math.ceil(total / pageSize)
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous
-          </Button>
+    return (
+        <div className="space-y-4">
 
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </Button>
+            {/* Search */}
+            <div className="flex justify-between items-center gap-4">
+                <Input
+                    placeholder="Search merchant or description..."
+                    value={search}
+                    onChange={(e) => {
+                        setPage(1)
+                        setSearch(e.target.value)
+                    }}
+                    className="max-w-sm"
+                />
+
+                {/* Account filter (optional) */}
+                <Select
+                    value={account_id || undefined}
+                    onValueChange={(value) => {
+                        setPage(1)
+                        setAccount_id(value || null)
+                    }}
+                >
+                    <SelectTrigger className="w-45">
+                        <SelectValue placeholder="Filter by account" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                        <SelectItem value={"all"}>All Accounts</SelectItem>
+                        {accounts.map((account) => (
+                            <SelectItem key={account.id} value={account.id}>
+                                {account.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* Table */}
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+
+                    <TableBody>
+                        {table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>
+                                        {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages}
+                </span>
+
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page === 1}
+                        onClick={() => setPage((p) => p - 1)}
+                    >
+                        Previous
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page === totalPages}
+                        onClick={() => setPage((p) => p + 1)}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  )
-}
+    )
+})
+
+TransactionsTable.displayName = "TransactionsTable"

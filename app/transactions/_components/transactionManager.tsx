@@ -1,7 +1,7 @@
 // ./app/transactions/_components/transactionManager.tsx
 
 'use client'
-import { useState } from "react"
+import { useState, useRef } from "react"
 import {
     CreateTransactionForm,
     Transaction,
@@ -17,8 +17,7 @@ import { toast } from "sonner"
 import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import TransactionForm from "@/app/transactions/_components/transactionForm"
-import { TransactionsTable } from "./transactionsTable"
-import { DialogDescription } from "@base-ui/react"
+import { TransactionsTable, TransactionsTableRef } from "@/app/transactions/_components/transactionsTable"
 
 interface TransactionManagerProps {
     className?: string
@@ -40,6 +39,8 @@ export default function TransactionManager({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
+    const tableRef = useRef<TransactionsTableRef>(null)
+    
     function openAdd() {
         setEditing(null)
         setOpen(true)
@@ -57,11 +58,13 @@ export default function TransactionManager({
                 await updateTransaction(editing.id, values)
                 setIsSubmitting(false)
                 toast.success("Transaction updated")
+                tableRef.current?.refetch()
             } else {
                 setIsSubmitting(true)
                 await insertTransaction(values)
                 setIsSubmitting(false)
                 toast.success("Transaction created")
+                tableRef.current?.refetch()
             }
             setOpen(false)
         } catch (error) {
@@ -77,6 +80,7 @@ export default function TransactionManager({
             await deleteTransaction(deleteTarget)
             setDeleteTarget(null)
             toast.success("Transaction deleted")
+            tableRef.current?.refetch()
         } catch (error) {
             toast.error("An error occurred")
             console.error(error)
@@ -95,6 +99,7 @@ export default function TransactionManager({
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <TransactionsTable
+                            ref={tableRef}
                             onEdit={openEdit}
                             onDelete={setDeleteTarget}
                             accounts={accounts}
