@@ -1,0 +1,553 @@
+import { useState } from "react";
+import {
+  BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, AreaChart, Area,
+} from "recharts";
+
+// ─── Inline shadcn-compatible primitives ─────────────────────────────────────
+// In your Next.js app replace these with: import { Card, ... } from "@/components/ui/card"
+
+function cn(...classes) { return classes.filter(Boolean).join(" "); }
+
+function Card({ className, children, ...props }) {
+  return (
+    <div className={cn("rounded-xl border bg-card text-card-foreground shadow-sm", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+function CardHeader({ className, children }) {
+  return <div className={cn("flex flex-col space-y-1 p-4", className)}>{children}</div>;
+}
+function CardTitle({ className, children }) {
+  return <h3 className={cn("text-sm font-semibold leading-none tracking-tight", className)}>{children}</h3>;
+}
+function CardContent({ className, children }) {
+  return <div className={cn("p-4 pt-0", className)}>{children}</div>;
+}
+
+function Badge({ className, children, variant = "default" }) {
+  const base = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
+  const variants = {
+    default:      "bg-amber-500/10 text-amber-400",
+    destructive:  "bg-red-500/10 text-red-400",
+    warning:      "bg-amber-500/10 text-amber-400",
+    success:      "bg-emerald-500/10 text-emerald-400",
+    secondary:    "bg-slate-700 text-slate-300",
+  };
+  return <span className={cn(base, variants[variant], className)}>{children}</span>;
+}
+
+function Separator({ className }) {
+  return <div className={cn("h-px bg-slate-800", className)} />;
+}
+
+function TabsList({ children, className }) {
+  return (
+    <div className={cn("inline-flex h-9 items-center rounded-lg p-1 w-full", className)}>
+      {children}
+    </div>
+  );
+}
+function TabsTrigger({ value, activeValue, onClick, children, className }) {
+  const active = value === activeValue;
+  return (
+    <button
+      onClick={() => onClick(value)}
+      className={cn(
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-all flex-1 capitalize",
+        active ? "bg-slate-700 text-slate-100 shadow" : "text-slate-500 hover:text-slate-300",
+        className
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Progress({ value, className, indicatorClassName }) {
+  return (
+    <div className={cn("relative w-full overflow-hidden rounded-full bg-slate-800", className)}>
+      <div
+        className={cn("h-full rounded-full transition-all duration-700 ease-out", indicatorClassName)}
+        style={{ width: `${Math.min(Math.max(value ?? 0, 0), 100)}%` }}
+      />
+    </div>
+  );
+}
+
+// ─── Mock Data ───────────────────────────────────────────────────────────────
+
+const budgets = [
+  { id: 1, name: "Groceries",     limit: 600, spent: 412, color: "#f59e0b", history: [280,340,390,412] },
+  { id: 2, name: "Dining Out",    limit: 250, spent: 238, color: "#ef4444", history: [80,150,200,238]  },
+  { id: 3, name: "Transport",     limit: 150, spent: 89,  color: "#22d3ee", history: [40,55,72,89]    },
+  { id: 4, name: "Entertainment", limit: 200, spent: 64,  color: "#a78bfa", history: [20,30,50,64]    },
+  { id: 5, name: "Health",        limit: 300, spent: 175, color: "#34d399", history: [100,120,155,175]},
+  { id: 6, name: "Shopping",      limit: 400, spent: 391, color: "#fb923c", history: [150,220,310,391]},
+];
+
+const totalBudget = budgets.reduce((s, b) => s + b.limit, 0);
+const totalSpent  = budgets.reduce((s, b) => s + b.spent, 0);
+
+const weeklyData = [
+  { day: "Mon", amount: 42  },
+  { day: "Tue", amount: 18  },
+  { day: "Wed", amount: 95  },
+  { day: "Thu", amount: 31  },
+  { day: "Fri", amount: 127 },
+  { day: "Sat", amount: 84  },
+  { day: "Sun", amount: 22  },
+];
+
+const recentTxns = [
+  { id: 1, desc: "Whole Foods",  cat: "Groceries",     amount: -54.12, date: "Today"     },
+  { id: 2, desc: "Uber",         cat: "Transport",     amount: -12.40, date: "Today"     },
+  { id: 3, desc: "Ramen House",  cat: "Dining Out",    amount: -28.00, date: "Yesterday" },
+  { id: 4, desc: "Netflix",      cat: "Entertainment", amount: -15.99, date: "Feb 17"    },
+  { id: 5, desc: "CVS Pharmacy", cat: "Health",        amount: -22.50, date: "Feb 16"    },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getPct(spent, limit) { return (spent / limit) * 100; }
+
+function statusVariant(p) {
+  if (p >= 100) return "destructive";
+  if (p >= 85)  return "warning";
+  return "success";
+}
+
+function progressColor(p) {
+  if (p >= 100) return "bg-red-500";
+  if (p >= 85)  return "bg-amber-400";
+  return "bg-emerald-400";
+}
+
+// ─── SVG Gauge Ring ───────────────────────────────────────────────────────────
+
+function GaugeRing({ pct: p, color, size = 72 }) {
+  const r = 26, circ = 2 * Math.PI * r;
+  const filled = (Math.min(p / 100, 1) * circ * 0.75).toFixed(1);
+  const clr = p >= 100 ? "#ef4444" : p >= 85 ? "#f59e0b" : color;
+  return (
+    <svg width={size} height={size} viewBox="0 0 70 70" className="flex-shrink-0">
+      <circle cx="35" cy="35" r={r} fill="none" stroke="#1e293b" strokeWidth="6"
+        strokeDasharray={`${(circ * 0.75).toFixed(1)} ${(circ * 0.25).toFixed(1)}`}
+        strokeLinecap="round" transform="rotate(-135 35 35)" />
+      <circle cx="35" cy="35" r={r} fill="none" stroke={clr} strokeWidth="6"
+        strokeDasharray={`${filled} ${(circ - filled).toFixed(1)}`}
+        strokeLinecap="round" transform="rotate(-135 35 35)"
+        style={{ transition: "stroke-dasharray .7s cubic-bezier(.4,0,.2,1)" }} />
+    </svg>
+  );
+}
+
+// ─── Mini Sparkline ───────────────────────────────────────────────────────────
+
+function MiniSparkline({ data, color }) {
+  const max = Math.max(...data);
+  const pts = data.map((v, i) => [i * (50 / (data.length - 1)), 18 - (v / max) * 16]);
+  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
+  return (
+    <svg width="54" height="22" viewBox="0 0 54 22" className="opacity-60">
+      <path d={d} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="2.5" fill={color} />
+    </svg>
+  );
+}
+
+// ─── Budget Card ──────────────────────────────────────────────────────────────
+
+function BudgetCard({ b }) {
+  const p = getPct(b.spent, b.limit);
+  const remaining = b.limit - b.spent;
+
+  return (
+    <Card className="bg-slate-900 border-slate-800 overflow-hidden relative">
+      {/* ambient glow */}
+      <div className="absolute top-0 right-0 w-28 h-28 -translate-y-10 translate-x-10 rounded-full opacity-[0.07] blur-2xl pointer-events-none"
+        style={{ background: b.color }} />
+
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          {/* Left */}
+          <div className="flex-1 min-w-0 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: b.color, boxShadow: `0 0 7px ${b.color}` }} />
+              <span className="text-sm font-semibold text-slate-100 truncate">{b.name}</span>
+            </div>
+
+            <div className="font-mono text-xs text-slate-400 leading-none">
+              <span className="text-slate-200 text-sm">${b.spent}</span>
+              <span className="text-slate-600 ml-1">/ ${b.limit}</span>
+            </div>
+
+            <Progress value={p} className="h-1.5" indicatorClassName={progressColor(p)} />
+
+            <div className="flex items-center justify-between">
+              <Badge variant={statusVariant(p)}>
+                {p >= 100 ? "Over budget" : p >= 85 ? `${Math.round(p)}% used` : `$${remaining} left`}
+              </Badge>
+              <MiniSparkline data={b.history} color={b.color} />
+            </div>
+          </div>
+
+          {/* Gauge */}
+          <div className="relative flex-shrink-0">
+            <GaugeRing pct={p} color={b.color} size={72} />
+            <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: 8 }}>
+              <span className="font-mono text-xs font-bold"
+                style={{ color: p >= 100 ? "#ef4444" : p >= 85 ? "#f59e0b" : b.color }}>
+                {Math.round(p)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Donut Summary ────────────────────────────────────────────────────────────
+
+function DonutSummary() {
+  const data = budgets.map(b => ({ name: b.name, value: b.spent, color: b.color }));
+  const overCount = budgets.filter(b => b.spent >= b.limit).length;
+
+  return (
+    <Card className="bg-slate-900 border-slate-800">
+      <CardHeader>
+        <CardTitle className="text-xs uppercase tracking-widest text-slate-500">February Snapshot</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            <ResponsiveContainer width={120} height={120}>
+              <PieChart>
+                <Pie data={data} cx="50%" cy="50%" innerRadius={36} outerRadius={54}
+                  paddingAngle={2} dataKey="value" stroke="none">
+                  {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="font-mono text-base font-bold text-slate-100">${totalSpent}</span>
+              <span className="text-[10px] text-slate-500">of ${totalBudget}</span>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-1.5">
+            {budgets.map(b => (
+              <div key={b.id} className="flex items-center gap-2 text-xs">
+                <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: b.color }} />
+                <span className="text-slate-400 flex-1 truncate">{b.name}</span>
+                <span className="font-mono text-slate-300">${b.spent}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {overCount > 0 && (
+          <>
+            <Separator className="my-3" />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                {overCount} budget{overCount > 1 ? "s" : ""} over limit
+              </span>
+              <Badge variant="destructive">Action needed</Badge>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Weekly Bar ───────────────────────────────────────────────────────────────
+
+function WeeklySpend() {
+  const maxDay = weeklyData.reduce((m, d) => d.amount > m.amount ? d : m);
+  const weekTotal = weeklyData.reduce((s, d) => s + d.amount, 0);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 shadow-xl">
+        <p className="text-slate-400 text-xs">{label}</p>
+        <p className="font-mono text-amber-400 font-bold">${payload[0].value}</p>
+      </div>
+    );
+  };
+
+  return (
+    <Card className="bg-slate-900 border-slate-800">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xs uppercase tracking-widest text-slate-500">This Week</CardTitle>
+          <span className="font-mono text-xs text-slate-500">
+            Total <span className="text-slate-300">${weekTotal}</span>
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={110}>
+          <BarChart data={weeklyData} barSize={22} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
+            <XAxis dataKey="day"
+              tick={{ fill: "#475569", fontSize: 11, fontFamily: "monospace" }}
+              axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: "#334155", fontSize: 10 }} axisLine={false} tickLine={false} />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
+            <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+              {weeklyData.map((d, i) => (
+                <Cell key={i} fill={d.day === maxDay.day ? "#f59e0b" : "#1e3a5f"} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Month Area Chart ─────────────────────────────────────────────────────────
+
+function MonthArea() {
+  const data = Array.from({ length: 19 }, (_, i) => ({
+    day: i + 1,
+    spent:  Math.round(totalSpent  * (1 - Math.pow(1 - (i + 1) / 28, 1.4))),
+    budget: Math.round(totalBudget * (i + 1) / 28),
+  }));
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 shadow-xl text-xs space-y-0.5">
+        <p className="text-slate-400">Feb {label}</p>
+        <p className="font-mono text-cyan-400">Spent: ${payload[0]?.value}</p>
+        <p className="font-mono text-slate-500">Budget: ${payload[1]?.value}</p>
+      </div>
+    );
+  };
+
+  return (
+    <Card className="bg-slate-900 border-slate-800">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xs uppercase tracking-widest text-slate-500">Month Progress</CardTitle>
+          <div className="flex items-center gap-3 text-[10px] text-slate-500">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" /> Spent
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-slate-600 inline-block" /> Budget pace
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={100}>
+          <AreaChart data={data} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
+            <defs>
+              <linearGradient id="spentGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#22d3ee" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}    />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="day" tick={{ fill: "#475569", fontSize: 10 }}
+              axisLine={false} tickLine={false} ticks={[1, 7, 14, 19]} />
+            <YAxis tick={false} axisLine={false} tickLine={false} />
+            <Tooltip content={<CustomTooltip />} />
+            <Area type="monotone" dataKey="spent"  stroke="#22d3ee" strokeWidth={2}
+              fill="url(#spentGrad)" dot={false} />
+            <Area type="monotone" dataKey="budget" stroke="#334155" strokeWidth={1.5}
+              fill="none" dot={false} strokeDasharray="4 3" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Recent Transactions ──────────────────────────────────────────────────────
+
+function RecentTransactions() {
+  return (
+    <Card className="bg-slate-900 border-slate-800">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xs uppercase tracking-widest text-slate-500">Recent</CardTitle>
+          <button className="text-xs text-slate-600 hover:text-slate-400 transition-colors">See all</button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-0">
+          {recentTxns.map((t, i) => {
+            const catColor = budgets.find(b => b.name === t.cat)?.color ?? "#475569";
+            return (
+              <div key={t.id}>
+                <div className="flex items-center gap-3 py-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700/50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-2 h-2 rounded-full"
+                      style={{ background: catColor, boxShadow: `0 0 6px ${catColor}` }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-200 font-medium truncate">{t.desc}</p>
+                    <p className="text-xs text-slate-500">{t.cat} · {t.date}</p>
+                  </div>
+                  <span className="font-mono text-sm text-red-400 font-medium flex-shrink-0">
+                    {t.amount.toFixed(2)}
+                  </span>
+                </div>
+                {i < recentTxns.length - 1 && <Separator />}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function BudgetDashboard() {
+  const [tab, setTab] = useState("overview");
+  const monthPct = (totalSpent / totalBudget) * 100;
+  const atRisk = budgets.filter(b => getPct(b.spent, b.limit) >= 85);
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap');
+        :root {
+          --background:       #080f1a;
+          --card:             #0f172a;
+          --card-foreground:  #f1f5f9;
+          --border:           #1e293b;
+          --muted:            #1e293b;
+          --muted-foreground: #64748b;
+          --primary:          #f59e0b;
+        }
+        * { box-sizing: border-box; }
+        .font-mono { font-family: 'DM Mono', monospace !important; }
+      `}</style>
+
+      <div className="min-h-screen bg-[#080f1a] text-slate-100 max-w-md mx-auto pb-24"
+        style={{ fontFamily: "'Sora', sans-serif" }}>
+
+        {/* Header */}
+        <div className="px-4 pt-12 pb-5 bg-gradient-to-b from-slate-900/60 to-transparent">
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <p className="text-xs text-slate-500 mb-0.5">Good morning</p>
+              <h1 className="text-xl font-bold text-slate-100">Alex</h1>
+            </div>
+            {/* Hook up your Add Transaction dialog here */}
+            <button className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xl font-light text-slate-400 hover:text-amber-400 hover:border-amber-400/40 transition-all">
+              +
+            </button>
+          </div>
+
+          {/* Monthly summary card */}
+          <Card className="bg-gradient-to-br from-slate-900 to-slate-800/70 border-slate-700">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-baseline mb-2.5">
+                <span className="text-xs text-slate-500">Feb 2026 · All Budgets</span>
+                <span className="font-mono text-xs">
+                  <span className="text-amber-400 font-bold">${totalSpent}</span>
+                  <span className="text-slate-600"> / ${totalBudget}</span>
+                </span>
+              </div>
+              <Progress
+                value={monthPct}
+                className="h-2"
+                indicatorClassName="bg-gradient-to-r from-blue-500 via-cyan-400 to-amber-400"
+              />
+              <div className="flex justify-between mt-2">
+                <span className="text-[11px] text-slate-500">{Math.round(monthPct)}% used this month</span>
+                <span className="font-mono text-[11px] text-cyan-400">${totalBudget - totalSpent} left</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs + Content */}
+        <div className="px-4 space-y-3">
+          <TabsList className="bg-slate-800/60 border border-slate-700/50">
+            {["overview", "budgets", "activity"].map(t => (
+              <TabsTrigger key={t} value={t} activeValue={tab} onClick={setTab}>{t}</TabsTrigger>
+            ))}
+          </TabsList>
+
+          {tab === "overview" && (
+            <>
+              <DonutSummary />
+              <MonthArea />
+              <WeeklySpend />
+              {atRisk.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[11px] uppercase tracking-widest text-slate-500">Needs Attention</span>
+                    <Badge variant="destructive">{atRisk.length}</Badge>
+                  </div>
+                  {atRisk.map(b => <BudgetCard key={b.id} b={b} />)}
+                </>
+              )}
+              <RecentTransactions />
+            </>
+          )}
+
+          {tab === "budgets" && (
+            <>
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-[11px] uppercase tracking-widest text-slate-500">All Budgets · Feb</span>
+                <span className="text-xs text-slate-600">{budgets.length} categories</span>
+              </div>
+              {budgets.map(b => <BudgetCard key={b.id} b={b} />)}
+            </>
+          )}
+
+          {tab === "activity" && (
+            <>
+              <WeeklySpend />
+              <MonthArea />
+              <RecentTransactions />
+            </>
+          )}
+        </div>
+
+        {/* Bottom Nav */}
+        <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-slate-900/95 backdrop-blur-sm border-t border-slate-800 px-2 py-3 flex justify-around">
+          {[
+            { label: "Dashboard", targetTab: "overview"  },
+            { label: "Budgets",   targetTab: "budgets"   },
+            { label: "Add",       targetTab: null        },
+            { label: "Reports",   targetTab: "activity"  },
+            { label: "Settings",  targetTab: null        },
+          ].map(({ label, targetTab }) => {
+            const active = targetTab && tab === targetTab;
+            return (
+              <button
+                key={label}
+                onClick={() => targetTab && setTab(targetTab)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-0.5 text-[10px] font-medium transition-colors rounded-md",
+                  label === "Add" ? "text-amber-400" : active ? "text-amber-400" : "text-slate-600 hover:text-slate-400"
+                )}
+              >
+                {label === "Add" ? (
+                  <span className="text-2xl font-thin leading-tight">+</span>
+                ) : (
+                  <div className={cn("w-4 h-0.5 rounded mb-1 transition-colors", active ? "bg-amber-400" : "bg-slate-800")} />
+                )}
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}

@@ -34,3 +34,9 @@ export type Category = z.infer<typeof CategorySchema>;
 export type UpdateCategoryForm = z.infer<typeof UpdateCategorySchema>;
 export type InsertCategoryForm = z.infer<typeof CreateCategorySchema>;
 export type CreateCategoryForm = z.infer<typeof CreateCategorySchema>;
+
+export type CategoryWithBudget = Pick<Category, 'id' | 'name' | 'parent_id'> & {
+    budget_amount: number;
+    spent: number;
+    remaining: number;
+}

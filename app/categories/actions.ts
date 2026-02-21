@@ -4,7 +4,8 @@
 
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
-import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategorySchema } from '@/schemas'
+import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategorySchema, CategoryWithBudget } from '@/schemas'
+import { TrainTrack } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 
 // Get all categories
@@ -145,4 +146,23 @@ export async function deleteCategory(id: string): Promise<string> {
     }
     revalidatePath('/budget/categories')
     return id;
+}
+
+export async function getCategoriesWithBudget(target_month: string = new Date().toISOString()): Promise<CategoryWithBudget[]> {
+    const supabase = await createClient();
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
+    }
+
+    const { data, error } = await supabase
+        .rpc('get_monthly_categories_with_budgets', {
+            target_month: target_month
+        })
+
+    if (error) {
+        console.error('Error fetching categories with budget:', error);
+        throw new Error('Failed to fetch categories with budget');
+    }
+    return data;
 }

@@ -75,46 +75,14 @@ create table public.transactions (
     notes text,
     raw_data jsonb,
     created_at timestamptz default now(),
-    constraint fk_transaction_account_member 
-      foreign key (account_id, member_id) 
-      references public.account_members (account_id, user_id) 
-      on delete cascade
+    constraint fk_transaction_account_member foreign key (account_id, member_id) references public.account_members (account_id, user_id) on delete cascade
 );
 
-alter table public.transactions enable row level security;
+create index on public.transactions (occurred_at);
 
--- ===== Transaction Splits =====
-create table public.transaction_splits (
-    id uuid primary key default gen_random_uuid (),
-    transaction_id uuid not null references public.transactions (id) on delete cascade,
-    category_id uuid references public.categories (id),
-    amount numeric not null check (amount > 0)
-);
+create index on public.transactions (category_id);
 
--- ===== Transaction Tags =====
-create table public.transaction_tags (
-    transaction_id uuid references public.transactions (id) on delete cascade,
-    tag_id uuid references public.tags (id) on delete cascade,
-    primary key (transaction_id, tag_id)
-);
-
-alter table public.tags enable row level security;
-
--- ===== Recurring Transactions =====
-create table public.recurring_transactions (
-    id uuid primary key default gen_random_uuid (),
-    user_id uuid not null references profiles (id),
-    account_id uuid not null references public.accounts (id),
-    category_id uuid references public.categories (id),
-    direction transaction_direction not null,
-    amount numeric not null,
-    description text,
-    frequency recurrence_frequency not null,
-    start_date date not null,
-    next_run_date date not null,
-    is_active boolean default true,
-    created_at timestamptz default now()
-);
+create index on public.transactions (account_id);
 
 -- ===== Transaction Imports =====
 create table public.transaction_imports (
@@ -151,6 +119,12 @@ create table public.account_balances (
     updated_at timestamptz default now()
 );
 
+create table public.budget_balances (
+    budget_id uuid primary key references public.budgets (id) on delete cascade,
+    balance numeric not null default 0,
+    updated_at timestamptz default now()
+);
+
 -- ============================
 -- Functions
 -- ============================
@@ -172,6 +146,7 @@ begin
 end;
 $$;
 
+-- Updates account balances after transaction changes
 create or replace function public.update_account_balance()
 returns trigger as $$
 declare
@@ -203,6 +178,90 @@ begin
 end;
 $$ language plpgsql;
 
+-- Totals all cetegory spending for a given month, including parent categories
+create or replace function public.get_monthly_category_spending(
+    target_month date
+)
+returns table (
+    category_id uuid,
+    category_name text,
+    parent_id uuid,
+    spent numeric
+)
+language sql
+as $$
+with month_txns as (
+    select
+        t.category_id,
+        public.get_signed_amount(a.type, t.direction, t.amount) as signed_amount
+    from public.transactions t
+    join public.accounts a on a.id = t.account_id
+    where date_trunc('month', t.occurred_at) =
+          date_trunc('month', target_month)
+),
+category_totals as (
+    select
+        c.id as category_id,
+        c.name,
+        c.parent_id,
+        coalesce(sum(mt.signed_amount), 0) as direct_spent
+    from public.categories c
+    left join month_txns mt
+        on mt.category_id = c.id
+    group by c.id, c.name, c.parent_id
+)
+select
+    ct.category_id,
+    ct.name,
+    ct.parent_id,
+    ct.direct_spent
+        + coalesce((
+            select sum(child.direct_spent)
+            from category_totals child
+            where child.parent_id = ct.category_id
+        ), 0) as spent
+from category_totals ct;
+$$;
+
+create or replace function public.get_monthly_categories_with_budgets(
+    target_month date
+)
+returns table (
+    id uuid,
+    name text,
+    parent_id uuid,
+    budget_amount numeric,
+    spent numeric,
+    remaining numeric
+)
+language sql
+as $$
+with spending as (
+    select *
+    from public.get_monthly_category_spending(target_month)
+)
+select
+    c.id,
+    c.name,
+    c.parent_id,
+    b.amount as budget_amount,
+    abs(coalesce(s.spent, 0)) as spent,
+    case
+        when b.amount is not null
+        then b.amount - abs(coalesce(s.spent, 0))
+        else null
+    end as remaining
+from public.categories c
+left join spending s
+    on s.category_id = c.id
+left join public.budgets b
+    on b.category_id = c.id
+    and b.period = 'monthly'
+order by
+    coalesce(c.parent_id, c.id),
+    c.parent_id nulls first
+$$;
+
 -- Helper for RLS on the transactions table
 create or replace function public.has_account_access(acc_id uuid)
 returns boolean as $$
@@ -224,7 +283,7 @@ begin
 end;
 $$ language plpgsql stable;
 
--- Helper for RLS on the transactions table
+-- Helper for RLS write access on the transactions table
 create or replace function public.has_account_write_access(acc_id uuid)
 returns boolean
 language sql
@@ -296,31 +355,6 @@ create trigger trg_update_account_balance
 after insert or update or delete on public.transactions
 for each row execute function public.update_account_balance();
 
-create or replace function public.validate_transaction_splits()
-returns trigger as $$
-declare
-  total numeric;
-  tx_amount numeric;
-begin
-  select amount into tx_amount from public.transactions where id = new.transaction_id;
-
-  select coalesce(sum(amount), 0)
-  into total
-  from public.transaction_splits
-  where transaction_id = new.transaction_id;
-
-  if total > tx_amount then
-    raise exception 'Split total exceeds transaction amount';
-  end if;
-
-  return new;
-end;
-$$ language plpgsql;
-
-create trigger trg_validate_splits
-after insert or update on public.transaction_splits
-for each row execute function public.validate_transaction_splits();
-
 -- ============================
 -- RLS
 -- ============================
@@ -369,6 +403,8 @@ create policy "Account members delete" on public.account_members for delete usin
 );
 
 -- Transaction Table
+alter table public.transactions enable row level security;
+
 create policy "Transaction read access" on public.transactions for
 select using (
         public.has_account_access (transactions.account_id)
@@ -411,24 +447,6 @@ create policy "Allow admin update access" on public.categories for
 update using (public.is_admin ());
 
 create policy "Allow admin delete access" on public.categories for delete using (public.is_admin ());
-
--- Tags
-create policy "Allow authenticated read access" on public.tags for
-select using (
-        auth.role () = 'authenticated'
-    );
-
-create policy "Allow authenticated insert access" on public.tags for
-insert
-with
-    check (
-        auth.role () = 'authenticated'
-    );
-
-create policy "Allow admin update access" on public.tags for
-update using (public.is_admin ());
-
-create policy "Allow admin delete access" on public.tags for delete using (public.is_admin ());
 
 -- Budgets
 create policy "Allow authenticated read access" on public.budgets for
