@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { CategoryWithBudget } from "@/schemas";
 import { Pie, PieChart, Label } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { Progress } from "@/components/ui/progress";
 
 interface CategorySnapshotProps {
     categories: CategoryWithBudget[];
@@ -25,7 +26,6 @@ export default function CategorySnapshot({ categories }: CategorySnapshotProps) 
         return config
     }, {} as ChartConfig)
 
-    // ✅ each item needs a `fill` so Recharts knows what color to use
     const chartData = categories.map((category, index) => ({
         ...category,
         fill: `var(--color-category_${index})`,
@@ -97,15 +97,11 @@ export default function CategorySnapshot({ categories }: CategorySnapshotProps) 
                                         </span>
                                     </div>
                                     {pct !== null && (
-                                        <div className="h-1 rounded-full bg-muted overflow-hidden ml-4">
-                                            <div
-                                                className="h-full rounded-full transition-all"
-                                                style={{
-                                                    width: `${Math.min(pct, 100)}%`,
-                                                    background: over ? "hsl(var(--destructive))" : getColor(category.name),
-                                                }}
-                                            />
-                                        </div>
+                                        <Progress
+                                            value={Math.min(pct, 100)}
+                                            className="[&>div]:bg-(--color-category)"
+                                            style={{ "--color-category": over ? "hsl(var(--destructive))" : getColor(category.name) } as React.CSSProperties}
+                                        />
                                     )}
                                 </div>
                             )
