@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +8,9 @@ import { getProfile } from "@/lib/auth/getProfile";
 import { Badge } from "@/components/ui/badge";
 import CategorySnapshot from "./categories/_components/categorySnapshot";
 import BudgetTrend from "./budgets/_components/budgetTrend";
+import { BudgetOverview } from "./budgets/_components/budgetOverview";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 export default async function Home() {
     const user = await requireAuth();
     const profile = await getProfile(user.id);
@@ -24,12 +25,21 @@ export default async function Home() {
 
     return (
         <>
+            <header className="px-8 flex items-center justify-between">
+                <div>
+                <h1 className="text-xl font-bold text-muted-foreground">Hello </h1>
+                <h2 className="text-2xl font-bold text-foreground">{profile.first_name}</h2>
+                </div>
+                <div>
+                    <Button variant="default" size="icon" className="">
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
+            </header>
             <main className="min-h-screen mx-auto p-6">
+                
                 <section>
-                    <Card>
-                        <CardTitle>Total</CardTitle>
-                        <CardContent>This is where a total component will live</CardContent>
-                    </Card>
+                    <BudgetOverview totalBudget={totalBudget} totalSpent={totalSpent} className="mb-6" />
                 </section>
                 <section>
                     <Tabs defaultValue="overview" className="w-full">
