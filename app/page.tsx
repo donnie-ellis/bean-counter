@@ -6,15 +6,23 @@ import { getCategoriesWithBudget } from "./categories/actions";
 import { CategoryWithBudget } from "@/schemas";
 import { getProfile } from "@/lib/auth/getProfile";
 import { Badge } from "@/components/ui/badge";
-import CategorySnapshot from "./categories/_components/categorySnapshot";
+import CategorySnapshot from "@/app/categories/_components/categorySnapshot";
 import BudgetTrend from "./budgets/_components/budgetTrend";
-import { BudgetOverview } from "./budgets/_components/budgetOverview";
+import { BudgetOverview } from "@/app/budgets/_components/budgetOverview";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { getTransactionsByMonth } from "@/app/transactions/actions";
+import { TransactionList } from "./transactions/_components/transactionList";
+import { TransactionsTable } from "./transactions/_components/transactionsTable";
+import { getAccounts } from "@/app/accounts/actions";
+import TransactionManager from "./transactions/_components/transactionManager";
 export default async function Home() {
     const user = await requireAuth();
     const profile = await getProfile(user.id);
     const categories = await getCategoriesWithBudget();
+    const transactions = await getTransactionsByMonth(new Date());
+    const accounts = await getAccounts();
+
     if (!categories) {
         return <div>Loading...</div>;
     }
@@ -70,6 +78,10 @@ export default async function Home() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Recent transactions */}
+                            <TransactionList transactions={transactions} className="w-full md:flex-1" />
+
                         </TabsContent>
 
                         <TabsContent value="transactions" className="pt-6">
@@ -92,7 +104,7 @@ export default async function Home() {
                         </TabsContent>
 
                         <TabsContent value="reports" className="pt-6">
-                            This is where the reports will go
+                            <TransactionManager accounts={accounts} className="w-full" />
                         </TabsContent>
 
                         {profile.role === "admin" && (

@@ -76,6 +76,45 @@ export async function getTransactions({
     }
   }
 
+  export async function getTransactionsByMonth(date: Date): Promise<Transaction[]> {
+    const user = await getUser()
+    if (!user) throw new Error("Not authenticated")
+  
+    const supabase = await createClient()
+  
+    const start = new Date(date.getFullYear(), date.getMonth(), 1).toISOString()
+    const end = new Date(date.getFullYear(), date.getMonth() + 1, 1).toISOString()
+  
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(`
+        id,
+        created_at,
+        user_id,
+        account_id,
+        member_id,
+        direction,
+        amount,
+        description,
+        merchant,
+        category_id,
+        occurred_at,
+        is_pending,
+        notes,
+        raw_data
+      `)
+      .gte("occurred_at", start)
+      .lt("occurred_at", end)
+      .order("occurred_at", { ascending: false })
+  
+    if (error || !data) {
+      console.error("Error retrieving transactions by month:", error)
+      throw new Error("Failed to retrieve transactions by month")
+    }
+  
+    return data
+  }
+
 // Get transactions for a single account
 export async function getTransactionsForAccount(accountId: string): Promise<Transaction[]> {
     const user = await getUser();
