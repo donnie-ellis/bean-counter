@@ -3,12 +3,13 @@ import Image from "next/image";
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BudgetCard } from "./budgets/_components/budgetCard";
+import { CategoryBudgetCard } from "./categories/_components/categoryBudgetCard";
 import { getCategoriesWithBudget } from "./categories/actions";
 import { CategoryWithBudget } from "@/schemas";
 import { getProfile } from "@/lib/auth/getProfile";
 import { Badge } from "@/components/ui/badge";
 import CategorySnapshot from "./categories/_components/categorySnapshot";
+import BudgetTrend from "./budgets/_components/budgetTrend";
 export default async function Home() {
     const user = await requireAuth();
     const profile = await getProfile(user.id);
@@ -18,6 +19,8 @@ export default async function Home() {
     }
     const warnBudgets = categories.filter(c => c.budget_amount > 0 && c.spent / c.budget_amount >= 0.85);
     const categoriesWithBudget = categories.filter(c => c.budget_amount > 0);
+    const totalBudget = categoriesWithBudget.reduce((sum, c) => sum + (c.budget_amount || 0), 0);
+    const totalSpent = categoriesWithBudget.reduce((sum, c) => sum + c.spent, 0);
 
     return (
         <>
@@ -36,19 +39,26 @@ export default async function Home() {
                             <TabsTrigger value="reports">Activity</TabsTrigger>
                             {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
                         </TabsList>
-                        <TabsContent value="overview" className="pt-6">
-                            <CategorySnapshot categories={categoriesWithBudget} />
+                        <TabsContent value="overview" className="pt-6 flex flex-wrap gap-4">
+                            {/* The Snapshot component */}
+                            <CategorySnapshot categories={categoriesWithBudget} className="w-full md:flex-1" />
+
+                            {/* The monthly progress component */}
+                            <BudgetTrend totalBudget={totalBudget} totalSpent={totalSpent} className="w-full md:flex-1" />
+
                             {/* Are any budgets at 85%? Show them if so */}
                             {warnBudgets.length > 0 && (
-                                <>
+                                <div className="w-full">
                                     <div className="flex items-center gap-2 pt-1">
-                                        <span className="text-[11px] uppercase tracking-widest text-slate-500">Needs Attention</span>
+                                        <span className="text-[11px] uppercase tracking-wide text-secondary-foreground/80">Needs Attention</span>
                                         <Badge variant="destructive">{warnBudgets.length}</Badge>
                                     </div>
-                                    {warnBudgets.map((category: CategoryWithBudget) => (
-                                        <BudgetCard key={category.id} category={category} allCategories={categories} />
-                                    ))}
-                                </>
+                                    <div className="flex flex-wrap gap-4 mt-2">
+                                        {warnBudgets.map((category: CategoryWithBudget) => (
+                                            <CategoryBudgetCard key={category.id} category={category} allCategories={categories} className="w-full md:flex-1" />
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </TabsContent>
 
@@ -62,9 +72,9 @@ export default async function Home() {
                                     No budgets yet. Create a budget to see it here.
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="flex flex-wrap gap-4">
                                     {categories.map((category: CategoryWithBudget) => (
-                                        <BudgetCard key={category.id} category={category} allCategories={categories} />
+                                        <CategoryBudgetCard key={category.id} category={category} allCategories={categories} className="w-full md:flex-1" />
                                     ))}
                                 </div>
                             )

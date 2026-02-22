@@ -13,15 +13,16 @@ import {
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import React from "react";
 
-interface BudgetCardProps {
+interface CategoryBudgetCardProps {
     category: CategoryWithBudget;
     allCategories: CategoryWithBudget[];
+    className?: string;
 }
 
 const getColor = (name: string) =>
     `hsl(${name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360}, 70%, 50%)`
 
-export const BudgetCard = ({ category, allCategories }: BudgetCardProps) => {
+export const CategoryBudgetCard = ({ category, allCategories, className = "" }: CategoryBudgetCardProps) => {
     const hasBudget = !!category.budget_amount && category.budget_amount !== 0;
     const percentageSpent = hasBudget ? (category.spent / category.budget_amount) * 100 : 0;
 
@@ -54,7 +55,7 @@ export const BudgetCard = ({ category, allCategories }: BudgetCardProps) => {
     }
 
     return (
-        <Card>
+        <Card className={className}>
             <CardContent className="p-4 flex gap-4 items-center">
 
                 <div className="flex-1 min-w-0 space-y-2.5">

@@ -8,12 +8,14 @@ import { Progress } from "@/components/ui/progress";
 
 interface CategorySnapshotProps {
     categories: CategoryWithBudget[];
+    className?: string;
+    month?: Date;
 }
 
 const getColor = (name: string) =>
     `hsl(${name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360}, 70%, 50%)`
 
-export default function CategorySnapshot({ categories }: CategorySnapshotProps) {
+export default function CategorySnapshot({ categories, className = "", month = new Date() }: CategorySnapshotProps) {
     const totalBudget = categories.reduce((acc, c) => acc + (c.budget_amount ?? 0), 0);
     const totalSpent = categories.reduce((acc, c) => acc + c.spent, 0);
     const overCount = categories.filter(c => c.budget_amount && c.spent > c.budget_amount).length;
@@ -32,10 +34,10 @@ export default function CategorySnapshot({ categories }: CategorySnapshotProps) 
     }))
 
     return (
-        <Card>
+        <Card className={className}>
             <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground">
-                    February Snapshot
+                    {month.toLocaleString('default', { month: 'long' })} Snapshot
                 </CardTitle>
             </CardHeader>
             <CardContent className="pb-0">
