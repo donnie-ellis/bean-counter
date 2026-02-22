@@ -16,6 +16,8 @@ import { TransactionList } from "./transactions/_components/transactionList";
 import { TransactionsTable } from "./transactions/_components/transactionsTable";
 import { getAccounts } from "@/app/accounts/actions";
 import TransactionManager from "./transactions/_components/transactionManager";
+
+
 export default async function Home() {
     const user = await requireAuth();
     const profile = await getProfile(user.id);
@@ -87,7 +89,7 @@ export default async function Home() {
                         <TabsContent value="transactions" className="pt-6">
                             This is where the transactions table will go
                         </TabsContent>
-
+                        {/******************************* Budgets Tab ***********************************/}
                         <TabsContent value="budgets" className="pt-6">
                             {categories.length === 0 ? (
                                 <div className="text-center text-sm text-slate-500 py-10">
@@ -109,7 +111,7 @@ export default async function Home() {
 
                         {profile.role === "admin" && (
                             <TabsContent value="admin" className="pt-6">
-                                This is where the admin panel will go
+                                This is where the admin panel will go ... eventually
                             </TabsContent>
                         )}
                     </Tabs>

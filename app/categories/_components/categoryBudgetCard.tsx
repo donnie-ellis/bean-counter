@@ -27,7 +27,7 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
     const percentageSpent = hasBudget ? (category.spent / category.budget_amount) * 100 : 0;
 
     const color = getColor(category.name);
-    const accentColor = percentageSpent >= 100 ? "#ef4444" : percentageSpent >= 85 ? "#f59e0b" : color;
+    const accentColor = color
 
     // Arc spans 280 degrees total; fill is proportional to percentage (capped at 100%)
     const MAX_ANGLE = 280;
@@ -100,7 +100,7 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
                         <div className="space-y-2">
                             <Progress
                                 value={Math.min(percentageSpent, 100)}
-                                className="[&>div]:bg-(--cat-color)"
+                                className={`[&>div]:bg-(--cat-color) hover:opacity-70 ${percentageSpent >= 100 ? "border border-destructive" : ""}`}
                                 style={{ "--cat-color": accentColor } as React.CSSProperties}
                             />
                             <Badge variant={statusVariant(percentageSpent)} className="text-xs">

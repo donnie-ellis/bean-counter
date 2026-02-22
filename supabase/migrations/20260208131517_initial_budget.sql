@@ -223,6 +223,7 @@ select
 from category_totals ct;
 $$;
 
+-- Combines category spending with budgets for a given month, including parent categories. Only returns categories with budgets.
 create or replace function public.get_monthly_categories_with_budgets(
     target_month date
 )
@@ -237,29 +238,50 @@ returns table (
 language sql
 as $$
 with spending as (
-    select *
-    from public.get_monthly_category_spending(target_month)
+    select * from public.get_monthly_category_spending(target_month)
+),
+category_data as (
+    select
+        c.id,
+        c.name,
+        c.parent_id,
+        coalesce(b.amount, 0) as direct_budget,
+        b.amount is not null as has_budget,
+        abs(coalesce(s.spent, 0)) as spent
+    from public.categories c
+    left join spending s on s.category_id = c.id
+    left join public.budgets b
+        on b.category_id = c.id
+        and b.period = 'monthly'
+),
+aggregated as (
+    select
+        cd.id,
+        cd.name,
+        cd.parent_id,
+        cd.direct_budget + coalesce((
+            select sum(child.direct_budget)
+            from category_data child
+            where child.parent_id = cd.id
+        ), 0) as total_budget,
+        cd.has_budget or exists(
+            select 1 from category_data child
+            where child.parent_id = cd.id and child.has_budget
+        ) as has_any_budget,
+        cd.spent
+    from category_data cd
 )
 select
-    c.id,
-    c.name,
-    c.parent_id,
-    b.amount as budget_amount,
-    abs(coalesce(s.spent, 0)) as spent,
-    case
-        when b.amount is not null
-        then b.amount - abs(coalesce(s.spent, 0))
-        else null
-    end as remaining
-from public.categories c
-left join spending s
-    on s.category_id = c.id
-left join public.budgets b
-    on b.category_id = c.id
-    and b.period = 'monthly'
+    a.id,
+    a.name,
+    a.parent_id,
+    case when a.has_any_budget then a.total_budget else null end as budget_amount,
+    a.spent,
+    case when a.has_any_budget then a.total_budget - a.spent else null end as remaining
+from aggregated a
 order by
-    coalesce(c.parent_id, c.id),
-    c.parent_id nulls first
+    coalesce(a.parent_id, a.id),
+    a.parent_id nulls first
 $$;
 
 -- Helper for RLS on the transactions table

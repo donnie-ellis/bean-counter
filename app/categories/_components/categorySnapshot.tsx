@@ -101,8 +101,8 @@ export default function CategorySnapshot({ categories, className = "", month = n
                                     {pct !== null && (
                                         <Progress
                                             value={Math.min(pct, 100)}
-                                            className="[&>div]:bg-(--color-category)"
-                                            style={{ "--color-category": over ? "hsl(var(--destructive))" : getColor(category.name) } as React.CSSProperties}
+                                            className={`[&>div]:bg-(--color-category) hover:opacity-70 ${over ? "border border-destructive" : ""}`}
+                                            style={{ "--color-category": getColor(category.name) } as React.CSSProperties}
                                         />
                                     )}
                                 </div>
