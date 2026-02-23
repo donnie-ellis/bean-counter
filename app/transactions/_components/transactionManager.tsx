@@ -5,9 +5,9 @@ import { useState, useRef } from "react"
 import {
     CreateTransactionForm,
     Transaction,
-    Category,
     Account,
-    SmallProfile
+    SmallProfile,
+    CategoryList
 } from "@/schemas"
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/app/transactions/actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,7 +21,7 @@ import { TransactionsTable, TransactionsTableRef } from "@/app/transactions/_com
 
 interface TransactionManagerProps {
     className?: string
-    categories?: Category[]
+    categories?: CategoryList
     accounts?: Account[]
     users?: SmallProfile[]
     currentUserId?: string

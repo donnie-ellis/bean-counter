@@ -40,3 +40,5 @@ export type CategoryWithBudget = Pick<Category, 'id' | 'name' | 'parent_id'> & {
     spent: number;
     remaining: number;
 }
+
+export type CategoryList = Pick<Category, 'id' | 'name'>[];

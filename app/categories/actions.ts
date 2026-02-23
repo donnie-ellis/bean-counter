@@ -4,7 +4,7 @@
 
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
-import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategorySchema, CategoryWithBudget } from '@/schemas'
+import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategoryWithBudget, CategoryList } from '@/schemas'
 import { TrainTrack } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 
@@ -26,6 +26,25 @@ export async function getCategories(): Promise<Category[]> {
     return data;
 }
 
+// Get a list of all categories
+export async function getCategoryList(): Promise<CategoryList> {
+    const supabase = await createClient();
+    const user = await getUser();
+    if (!user) {
+        throw new Error('Not authenticated');
+    }
+    const { data, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .order('name');
+    if (error) {
+        console.error('Error fetching categories:', error);
+        throw new Error('Failed to fetch categories');
+    }
+    return data;
+}
+
+// Get a list of all categories without a budget
 export async function getCategoriesWithoutBudget(): Promise<Category[]> {
     const supabase = await createClient();
     const user = await getUser();

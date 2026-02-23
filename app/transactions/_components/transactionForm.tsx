@@ -10,7 +10,8 @@ import {
     Transaction,
     Account,
     Category,
-    SmallProfile
+    SmallProfile,
+    CategoryList
 } from '@/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ import { CalendarIcon } from 'lucide-react';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
-    categories: Category[];
+    categories: CategoryList;
     accounts: Account[];
     users: SmallProfile[];
     onSubmit: (data: CreateTransactionForm) => Promise<void>;

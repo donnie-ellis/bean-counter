@@ -16,6 +16,8 @@ import { TransactionList } from "./transactions/_components/transactionList";
 import { TransactionsTable } from "./transactions/_components/transactionsTable";
 import { getAccounts } from "@/app/accounts/actions";
 import TransactionManager from "./transactions/_components/transactionManager";
+import { CreateTransactionButton } from "./transactions/_components/createTransactionButton";
+import { getSmallProfiles } from "@/app/profile/actions";
 
 
 export default async function Home() {
@@ -32,6 +34,9 @@ export default async function Home() {
     const categoriesWithBudget = categories.filter(c => c.budget_amount > 0);
     const totalBudget = categoriesWithBudget.reduce((sum, c) => sum + (c.budget_amount || 0), 0);
     const totalSpent = categoriesWithBudget.reduce((sum, c) => sum + c.spent, 0);
+    const users = await getSmallProfiles()
+    const categoryList = categories.map(c => ({ id: c.id, name: c.name }));
+
 
     return (
         <>
@@ -41,9 +46,15 @@ export default async function Home() {
                 <h2 className="text-2xl font-bold text-foreground">{profile.first_name}</h2>
                 </div>
                 <div>
-                    <Button variant="default" size="icon" className="">
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                    <CreateTransactionButton
+                        variant="default"
+                        size="icon"
+                        categories={categoryList}
+                        accounts={accounts}
+                        users={users}
+                        currentUserId={profile.id}
+                        icon={true}
+                    />
                 </div>
             </header>
             <main className="min-h-screen mx-auto p-6">
@@ -106,7 +117,12 @@ export default async function Home() {
                         </TabsContent>
 
                         <TabsContent value="reports" className="pt-6">
-                            <TransactionManager accounts={accounts} className="w-full" />
+                            <TransactionManager
+                                accounts={accounts}
+                                users={users}
+                                currentUserId={profile.id}
+                                categories={categoryList}
+                                className="w-full" />
                         </TabsContent>
 
                         {profile.role === "admin" && (
