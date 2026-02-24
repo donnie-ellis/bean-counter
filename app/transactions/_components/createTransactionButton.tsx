@@ -66,7 +66,7 @@ export function CreateTransactionButton({
                 onClick={() => setOpen(true)}
                 >
                 {buttonText || ''}
-                {icon && <Plus className="ml-2 h-4 w-4" />}
+                {icon && <Plus className={`h-4 w-4 ${buttonText ? "ml-2" : ""}`} />}
             </Button>
             {/* Edit form */}
             <Dialog open={open} onOpenChange={setOpen} >

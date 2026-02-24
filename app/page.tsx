@@ -1,5 +1,4 @@
 import { requireAuth } from "@/lib/auth/requireAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryBudgetCard } from "./categories/_components/categoryBudgetCard";
 import { getCategoriesWithBudget } from "./categories/actions";
@@ -9,22 +8,29 @@ import { Badge } from "@/components/ui/badge";
 import CategorySnapshot from "@/app/categories/_components/categorySnapshot";
 import BudgetTrend from "./budgets/_components/budgetTrend";
 import { BudgetOverview } from "@/app/budgets/_components/budgetOverview";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { getTransactionsByMonth } from "@/app/transactions/actions";
 import { TransactionList } from "./transactions/_components/transactionList";
-import { TransactionsTable } from "./transactions/_components/transactionsTable";
 import { getAccounts } from "@/app/accounts/actions";
 import TransactionManager from "./transactions/_components/transactionManager";
 import { CreateTransactionButton } from "./transactions/_components/createTransactionButton";
 import { getSmallProfiles } from "@/app/profile/actions";
+import MonthPicker from "@/components/monthPicker";
+import AccountManager from "./accounts/_components/accountManager";
+import CategoryManager from "./categories/_components/categoryManager";
 
+interface HomeProps { 
+    searchParams: Promise<{
+        month?: Date;
+    }>;
+}
 
-export default async function Home() {
+export default async function Home({ searchParams, }: HomeProps) {
+    const { month } = await searchParams;
+    const selectedMonth = month ?? new Date().toISOString();
     const user = await requireAuth();
     const profile = await getProfile(user.id);
-    const categories = await getCategoriesWithBudget();
-    const transactions = await getTransactionsByMonth(new Date());
+    const categories = await getCategoriesWithBudget(selectedMonth.toString());
+    const transactions = await getTransactionsByMonth(new Date(selectedMonth));
     const accounts = await getAccounts();
 
     if (!categories) {
@@ -42,34 +48,38 @@ export default async function Home() {
         <>
             <header className="px-8 flex items-center justify-between">
                 <div>
-                <h1 className="text-xl font-bold text-muted-foreground">Hello </h1>
-                <h2 className="text-2xl font-bold text-foreground">{profile.first_name}</h2>
+                    <h1 className="text-xl font-bold text-muted-foreground">Hello </h1>
+                    <h2 className="text-2xl font-bold text-foreground">{profile.first_name}</h2>
                 </div>
                 <div>
-                    <CreateTransactionButton
-                        variant="default"
-                        size="icon"
-                        categories={categoryList}
-                        accounts={accounts}
-                        users={users}
-                        currentUserId={profile.id}
-                        icon={true}
-                    />
+                    <MonthPicker />
                 </div>
             </header>
             <main className="min-h-screen mx-auto p-6">
-                
+
                 <section>
                     <BudgetOverview totalBudget={totalBudget} totalSpent={totalSpent} className="mb-6" />
                 </section>
                 <section>
-                    <Tabs defaultValue="overview" className="w-full">
-                        <TabsList className="bg-transparent border-b w-full justify-start">
-                            <TabsTrigger value="overview">Overview</TabsTrigger>
-                            <TabsTrigger value="budgets">Budgets</TabsTrigger>
-                            <TabsTrigger value="reports">Activity</TabsTrigger>
-                            {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
-                        </TabsList>
+                <Tabs defaultValue="overview" className="w-full">
+  <TabsList className="bg-accent border-b w-full justify-between fixed bottom-0 left-0 right-0 rounded-none h-14 px-2 md:sticky md:top-0 md:h-10 md:rounded-lg md:justify-start md:w-auto">
+    <TabsTrigger value="overview">Overview</TabsTrigger>
+    <TabsTrigger value="budgets">Budgets</TabsTrigger>
+
+    <CreateTransactionButton
+      variant="default"
+      size="lg"
+      categories={categoryList}
+      accounts={accounts}
+      users={users}
+      currentUserId={profile.id}
+      icon={true}
+      className="rounded-full h-10 w-10 md:h-20 md:w-20 md:-translate-y-6"
+    />
+
+    <TabsTrigger value="reports">Activity</TabsTrigger>
+    {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
+  </TabsList>
                         <TabsContent value="overview" className="pt-6 flex flex-wrap gap-4">
                             {/* The Snapshot component */}
                             <CategorySnapshot categories={categoriesWithBudget} className="w-full md:flex-1" />
@@ -125,9 +135,11 @@ export default async function Home() {
                                 className="w-full" />
                         </TabsContent>
 
+                            {/******************************* Admin Tab ***********************************/}
                         {profile.role === "admin" && (
                             <TabsContent value="admin" className="pt-6">
-                                This is where the admin panel will go ... eventually
+                                <AccountManager profiles={users} initialAccounts={accounts} />
+                                <CategoryManager categories={categories} />
                             </TabsContent>
                         )}
                     </Tabs>
