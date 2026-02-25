@@ -65,12 +65,13 @@ export default function BudgetTrend({ totalBudget, totalSpent, month = new Date(
 
     return (
         <Card className={className}>
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium uppercase tracking-widest">
-                        {month.toLocaleString('default',  {month: 'long'})} Progress
+            <CardHeader className="pb-2 flex items-center justify-between">
+                    <CardTitle className="text-xs">
+                        <h1 className="font-medium text-muted-foreground uppercase tracking-widest">
+                            {month.toLocaleString('default',  {month: 'long'})} Progress
+                        </h1>
                     </CardTitle>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="gap-1.5 text-xs font-normal">
                             <span
                                 className="inline-block h-2 w-2 rounded-full"
@@ -96,7 +97,6 @@ export default function BudgetTrend({ totalBudget, totalSpent, month = new Date(
                             {isUnder ? "Under budget" : "Over budget"}
                         </Badge>
                     </div>
-                </div>
             </CardHeader>
 
             <CardContent>

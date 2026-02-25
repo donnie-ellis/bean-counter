@@ -36,8 +36,10 @@ export default function CategorySnapshot({ categories, className = "", month = n
     return (
         <Card className={className}>
             <CardHeader>
-                <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground">
-                    {month.toLocaleString('default', { month: 'long' })} Snapshot
+                <CardTitle className="text-xs">
+                    <h1 className="font-medium uppercase tracking-widest text-muted-foreground">
+                        {month.toLocaleString('default', { month: 'long' })} Snapshot
+                    </h1>
                 </CardTitle>
             </CardHeader>
             <CardContent className="pb-0">

@@ -17,6 +17,7 @@ import { getSmallProfiles } from "@/app/profile/actions";
 import MonthPicker from "@/components/monthPicker";
 import AccountManager from "@/app/accounts/_components/accountManager";
 import CategoryManager from "@/app/categories/_components/categoryManager";
+import DailyTotals from "@/components/dailyTotals";
 
 interface HomeProps {
     searchParams: Promise<{
@@ -64,10 +65,11 @@ export default async function Home({ searchParams, }: HomeProps) {
                 <section>
                     {/******************************* Tabs ***********************************/}
                     <Tabs defaultValue="overview" className="w-full">
-                        <TabsList className="bg-accent border-b w-full justify-between fixed bottom-0 left-0 right-0 rounded-none h-14 px-2 md:sticky md:top-0 md:h-10 md:rounded-lg md:justify-start md:w-auto">
-                            <TabsTrigger value="overview">Overview</TabsTrigger>
-                            <TabsTrigger value="budgets">Budgets</TabsTrigger>
-
+                        <TabsList className="bg-accent border-b w-full justify-between fixed bottom-0 left-0 right-0 rounded-none h-14 px-2 md:sticky md:top-0 md:h-10 md:rounded-lg md:justify-between md:w-full">
+                            <div className="flex flex-1 justify-around md:justify-start md:gap-1">
+                                <TabsTrigger value="overview">Overview</TabsTrigger>
+                                <TabsTrigger value="categories">Categories</TabsTrigger>
+                            </div>
                             <CreateTransactionButton
                                 variant="default"
                                 size="lg"
@@ -78,9 +80,12 @@ export default async function Home({ searchParams, }: HomeProps) {
                                 icon={true}
                                 className="rounded-full h-10 w-10 md:h-20 md:w-20 md:-translate-y-6"
                             />
+                            <div className="flex flex-1 justify-around md:justify-end md:gap-1">
 
-                            <TabsTrigger value="reports">Activity</TabsTrigger>
-                            {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
+                                <TabsTrigger value="reports">Activity</TabsTrigger>
+                                <TabsTrigger value="accounts">Accounts</TabsTrigger>
+                                {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
+                            </div>
                         </TabsList>
 
                         {/******************************* Overview Tab ***********************************/}
@@ -90,6 +95,9 @@ export default async function Home({ searchParams, }: HomeProps) {
 
                             {/* The monthly progress component */}
                             <BudgetTrend totalBudget={totalBudget} totalSpent={totalSpent} className="w-full md:flex-1" />
+
+
+                            <DailyTotals className="w-full md:flex-1" transactions={transactions} />
 
                             {/* Are any budgets at 85%? Show them if so */}
                             {warnBudgets.length > 0 && (
@@ -106,8 +114,13 @@ export default async function Home({ searchParams, }: HomeProps) {
                                 </div>
                             )}
 
+
                             {/* Recent transactions */}
-                            <TransactionList transactions={transactions} className="w-full md:flex-1" />
+                            <TransactionList
+                                className="w-full md:flex-1"
+                                categoryList={categoryList}
+                                transactions={transactions}
+                            />
 
                         </TabsContent>
 
@@ -116,7 +129,7 @@ export default async function Home({ searchParams, }: HomeProps) {
                         </TabsContent>
 
                         {/******************************* Budgets Tab ***********************************/}
-                        <TabsContent value="budgets" className="pt-6">
+                        <TabsContent value="categories" className="pt-6">
                             {categoriesFull.length === 0 ? (
                                 <div className="text-center text-sm text-foreground/70 py-10">
                                     No Categories yet, please create some to get started

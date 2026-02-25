@@ -1,5 +1,5 @@
 'use client'
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CategoryWithSpending } from "@/schemas";
@@ -56,23 +56,26 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
 
     return (
         <Card className={className}>
-            <CardContent className="p-4 flex gap-4 items-center">
-
-                <div className="flex-1 min-w-0 space-y-2.5">
-
+            <CardHeader className="flex justify-between text-xs">
+                <CardTitle className="font-medium text-foreground-muted uppercase tracking-widest">
                     {/* Breadcrumb + name */}
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
                         <div className="flex items-center gap-1 min-w-0">
                             {parentName && (
                                 <>
-                                    <span className="text-xs text-foreground/35 truncate">{parentName}</span>
-                                    <span className="text-foreground/25 text-xs">›</span>
+                                    <span className="text-foreground-muted/35 truncate">{parentName}</span>
+                                    <span className="text-foreground-muted/25">›</span>
                                 </>
                             )}
-                            <span className="text-sm font-semibold truncate">{category.name}</span>
+                            <span className="truncate">{category.name}</span>
                         </div>
                     </div>
+                    </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 flex gap-4 items-center">
+
+                <div className="flex-1 min-w-0 space-y-2.5">
 
                     {/* Spent + Budget */}
                     <div className="flex items-baseline gap-3 font-mono text-sm">
