@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CategoryWithBudget } from "@/schemas";
+import { CategoryWithSpending } from "@/schemas";
 import {
     Label,
     PolarGrid,
@@ -14,8 +14,8 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import React from "react";
 
 interface CategoryBudgetCardProps {
-    category: CategoryWithBudget;
-    allCategories: CategoryWithBudget[];
+    category: CategoryWithSpending;
+    allCategories: CategoryWithSpending[];
     className?: string;
 }
 
@@ -24,7 +24,8 @@ const getColor = (name: string) =>
 
 export const CategoryBudgetCard = ({ category, allCategories, className = "" }: CategoryBudgetCardProps) => {
     const hasBudget = !!category.budget_amount && category.budget_amount !== 0;
-    const percentageSpent = hasBudget ? (category.spent / category.budget_amount) * 100 : 0;
+    const budget = category.budget_amount || category.total_budget || 0;
+    const percentageSpent = budget !== 0 ?category.spent / budget * 100 : 0
 
     const color = getColor(category.name);
     const accentColor = color
@@ -88,7 +89,7 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
                                 <div className="flex flex-col">
                                     <span className="text-[10px] uppercase tracking-wide text-foreground/40 font-sans">Budget</span>
                                     <span className="text-foreground/60">
-                                        ${category.budget_amount.toLocaleString()}
+                                        ${budget.toLocaleString()}
                                     </span>
                                 </div>
                             </>

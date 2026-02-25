@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Category, InsertCategoryForm, CreateCategoryForm, CreateCategorySchema } from '@/schemas';
+import { Category, InsertCategoryForm, CreateCategorySchema } from '@/schemas';
 
 interface CategoryFormProps {
     category?: Category | null;
@@ -23,7 +23,6 @@ interface CategoryFormProps {
     onSubmit: (data: InsertCategoryForm) => Promise<void>;
     isSubmitting?: boolean;
     isCreate?: boolean;
-    isCompact?: boolean;
     parentId?: string | null;
 }
 
@@ -33,14 +32,14 @@ export default function CategoryForm({
     onSubmit,
     isSubmitting = false,
     isCreate = true,
-    isCompact = false,
     parentId,
 }: CategoryFormProps) {
+    
     const { control, handleSubmit } = useForm<InsertCategoryForm>({
         resolver: zodResolver(CreateCategorySchema),
         defaultValues: {
             name: category?.name || '',
-            parent_id: parentId|| null,
+            parent_id: parentId || null,
             budget_amount: category?.budget_amount || 0,
         }
     });
@@ -53,34 +52,6 @@ export default function CategoryForm({
             return isCreate ? 'Creating...' : 'Updating...';
         }
         return isCreate ? 'Create Category' : 'Update Category';
-    }
-
-
-    if (isCompact) {
-        return (
-            <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
-                <Controller
-                    name="name"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid} className="flex-1">
-                            <Input
-                                id="category-name"
-                                placeholder="Category name..."
-                                {...field}
-                                value={field.value ?? ''}
-                                className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
-                                aria-invalid={fieldState.invalid}
-                            />
-                            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                        </Field>
-                    )}
-                />
-                <Button type="submit" size="icon">
-                    <Plus className="h-4 w-4" />
-                </Button>
-            </form>
-        );
     }
 
     return (
@@ -105,7 +76,6 @@ export default function CategoryForm({
             />
 
             {/* Budget amount */ }
-
             <Controller
                 name="budget_amount"
                 control={control}
@@ -119,6 +89,7 @@ export default function CategoryForm({
                             step="0.01"
                             {...field}
                             value={field.value ?? ''}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
                             className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
                             aria-invalid={fieldState.invalid}
                         />
