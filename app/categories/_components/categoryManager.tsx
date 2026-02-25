@@ -156,9 +156,9 @@ export default function CategoryManager({ categories, className = "" }: Category
                                                 >
                                                     <ItemContent>
                                                         <span>{child.name}</span>
-                                                        {cat.budget_amount && (
+                                                        {child.budget_amount && (
                                                             <span className="text-xs text-muted-foreground">
-                                                                ${cat.budget_amount.toLocaleString()}
+                                                                ${child.budget_amount.toLocaleString()}
                                                             </span>
                                                         )}
                                                     </ItemContent>
