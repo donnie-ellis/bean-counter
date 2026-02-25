@@ -118,8 +118,8 @@ export default async function Home({ searchParams, }: HomeProps) {
                         {/******************************* Budgets Tab ***********************************/}
                         <TabsContent value="budgets" className="pt-6">
                             {categoriesFull.length === 0 ? (
-                                <div className="text-center text-sm text-slate-500 py-10">
-                                    No budgets yet. Create a budget to see it here.
+                                <div className="text-center text-sm text-foreground/70 py-10">
+                                    No Categories yet, please create some to get started
                                 </div>
                             ) : (
                                 <div className="flex flex-wrap gap-4">
@@ -142,9 +142,9 @@ export default async function Home({ searchParams, }: HomeProps) {
 
                         {/******************************* Admin Tab ***********************************/}
                         {profile.role === "admin" && (
-                            <TabsContent value="admin" className="pt-6">
-                                <AccountManager profiles={users} initialAccounts={accounts} />
-                                <CategoryManager categories={categories} />
+                            <TabsContent value="admin" className="pt-6 flex flex-wrap gap-4">
+                                <AccountManager className="w-full md:flex-1" profiles={users} initialAccounts={accounts} />
+                                <CategoryManager className="w-full md:flex-1" categories={categories} />
                             </TabsContent>
                         )}
                     </Tabs>
