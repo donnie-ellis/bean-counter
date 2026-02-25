@@ -10,12 +10,14 @@ export const CategorySchema = BaseEntitySchema.extend({
     user_id: z.string().uuid(),
     name: z.string().trim().min(1, 'Name is required').max(255),
     parent_id: z.string().uuid().nullable(),
+    budget_amount: z.number().positive().optional(),
 });
 
 // Insert Category
 export const CreateCategorySchema = z.object({
     name: z.string().trim().min(1).max(255),
     parent_id: z.string().uuid().nullable().optional(),
+    budget_amount: z.number().positive().optional(),
 });
 
 // Update Category
@@ -34,11 +36,8 @@ export type Category = z.infer<typeof CategorySchema>;
 export type UpdateCategoryForm = z.infer<typeof UpdateCategorySchema>;
 export type InsertCategoryForm = z.infer<typeof CreateCategorySchema>;
 export type CreateCategoryForm = z.infer<typeof CreateCategorySchema>;
-
-export type CategoryWithBudget = Pick<Category, 'id' | 'name' | 'parent_id'> & {
-    budget_amount: number;
+export type CategoryWithSpending = Pick<Category, 'id' | 'name' | 'parent_id'> & {
     spent: number;
     remaining: number;
 }
-
 export type CategoryList = Pick<Category, 'id' | 'name'>[];

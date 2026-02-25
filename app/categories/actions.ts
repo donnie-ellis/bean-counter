@@ -4,7 +4,7 @@
 
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
-import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategoryWithBudget, CategoryList } from '@/schemas'
+import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategoryWithSpending, CategoryList } from '@/schemas'
 import { TrainTrack } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 
@@ -44,40 +44,6 @@ export async function getCategoryList(): Promise<CategoryList> {
     return data;
 }
 
-// Get a list of all categories without a budget
-export async function getCategoriesWithoutBudget(): Promise<Category[]> {
-    const supabase = await createClient();
-    const user = await getUser();
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
-  
-    // Get all Category IDs that have a budget
-    const { data: budgetData } = await supabase
-      .from('budgets')
-      .select('category_id')
-      .not('category_id', 'is', null);
-  
-    const budgetCategoryIds = budgetData?.map(b => b.category_id) || [];
-  
-    // If there are no budgets, return all categories
-    if (budgetCategoryIds.length === 0) {
-      return await getCategories();
-    }
-  
-    // Get all categories that do not have a budget
-    const { data, error } = await supabase
-      .from('categories')
-      .select('id, name, user_id, created_at, parent_id')
-      .not('id', 'in', `(${budgetCategoryIds.join(',')})`);  // No quotes needed
-  
-    if (error) {
-      console.error('Error fetching categories without budget:', error);
-      throw new Error('Failed to fetch categories without budget');
-    }
-  
-    return data;
-  }
 // Get a single category
 export async function getCategory(id: string): Promise<Category> {
     const supabase = await createClient();
@@ -163,11 +129,10 @@ export async function deleteCategory(id: string): Promise<string> {
         console.error('Error deleting category:', error);
         throw new Error('Failed to delete category');
     }
-    revalidatePath('/budget/categories')
     return id;
 }
 
-export async function getCategoriesWithBudget(target_month: string = new Date().toISOString()): Promise<CategoryWithBudget[]> {
+export async function getCategoriesWithBudget(target_month: string = new Date().toISOString()): Promise<CategoryWithSpending[]> {
     const supabase = await createClient();
     const user = await getUser();
     if (!user) {

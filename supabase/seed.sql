@@ -159,10 +159,10 @@ BEGIN
   VALUES (admin_id, 'Food')
   RETURNING id INTO food_id;
 
-  INSERT INTO public.categories (user_id, name, parent_id)
+  INSERT INTO public.categories (user_id, name, parent_id, budget_amount)
   VALUES
-    (admin_id, 'Dining Out', food_id),
-    (admin_id, 'Grocery', food_id);
+    (admin_id, 'Dining Out', food_id, 200),
+    (admin_id, 'Grocery', food_id, 400);
 
   SELECT c.id INTO dining_id 
   FROM public.categories c
@@ -175,15 +175,6 @@ BEGIN
   INSERT INTO public.categories (user_id, name)
   VALUES (admin_id, 'Fun')
   RETURNING id INTO fun_id;
-
-  -- ======================
-  -- Budgets (Monthly)
-  -- ======================
-
-  INSERT INTO public.budgets (user_id, category_id, period, amount)
-  VALUES
-    (admin_id, dining_id, 'monthly', 200),
-    (admin_id, grocery_id, 'monthly', 400);
 
   -- ==========================================================
   -- MONTH 1 (Current Month)

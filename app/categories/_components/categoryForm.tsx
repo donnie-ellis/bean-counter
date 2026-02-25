@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Category, InsertCategoryForm, CreateCategorySchema } from '@/schemas';
+import { Category, InsertCategoryForm, CreateCategoryForm, CreateCategorySchema } from '@/schemas';
 
 interface CategoryFormProps {
     category?: Category | null;
@@ -40,7 +40,8 @@ export default function CategoryForm({
         resolver: zodResolver(CreateCategorySchema),
         defaultValues: {
             name: category?.name || '',
-            parent_id: parentId|| null
+            parent_id: parentId|| null,
+            budget_amount: category?.budget_amount || 0,
         }
     });
 
@@ -103,6 +104,30 @@ export default function CategoryForm({
                 )}
             />
 
+            {/* Budget amount */ }
+
+            <Controller
+                name="budget_amount"
+                control={control}
+                render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="budget-amount">Budget Amount</FieldLabel>
+                        <Input
+                            id="budget-amount"
+                            type="number"
+                            placeholder="Enter budget amount..."
+                            step="0.01"
+                            {...field}
+                            value={field.value ?? ''}
+                            className={fieldState.invalid ? 'border-destructive focus-visible:ring-destructive' : ''}
+                            aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
+                    </Field>
+                )} 
+            />
+
+            {/* Parent category selection (only for top-level categories) */ }
             <Controller
                 name="parent_id"
                 control={control}

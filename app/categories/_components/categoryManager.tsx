@@ -15,13 +15,13 @@ import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react"
 
 import {
     type InsertCategoryForm,
-    type Category,
+    type Category
 } from "@/schemas"
 
 import {
     createCategory,
     updateCategory,
-    deleteCategory,
+    deleteCategory
 } from "@/app/categories/actions"
 import {
     AlertDialog,
@@ -35,6 +35,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia } from "@/components/ui/item"
 import CategoryForm from "@/app/categories/_components/categoryForm"
+
+interface CategoryManagerProps {
+    className?: string
+    categories: Category[]
+}
 
 interface CategoryNode extends Category {
     children?: CategoryNode[]
@@ -57,7 +62,7 @@ function buildTree(categories: Category[]): CategoryNode[] {
     return roots
 }
 
-export default function CategoryManager({ categories, className = "" }: { categories: Category[], className?: string }) {
+export default function CategoryManager({ categories, className = "" }: CategoryManagerProps) {
     const tree = useMemo(() => buildTree(categories), [categories])
     const [open, setOpen] = useState(false)
     const [editing, setEditing] = useState<Category | null>(null)
@@ -82,6 +87,8 @@ export default function CategoryManager({ categories, className = "" }: { catego
         } else {
             await createCategory(values)
         }
+        setEditing(null)
+        setParentId(null)
         setOpen(false)
     }
 
@@ -119,6 +126,11 @@ export default function CategoryManager({ categories, className = "" }: { catego
                                     </ItemMedia>
                                     <ItemContent className="flex gap-2">
                                         <span className="font-medium">{cat.name}</span>
+                                            {cat.budget_amount && (
+                                                <span className="text-xs text-muted-foreground">
+                                                     ${cat.budget_amount.toLocaleString()}
+                                                </span>
+                                            )}
                                     </ItemContent>
                                     <ItemActions className="flex gap-1">
                                         <Button variant="ghost" size="icon" onClick={() => openAdd(cat.id)}>
@@ -144,6 +156,11 @@ export default function CategoryManager({ categories, className = "" }: { catego
                                                 >
                                                     <ItemContent>
                                                         <span>{child.name}</span>
+                                                        {cat.budget_amount && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                ${cat.budget_amount.toLocaleString()}
+                                                            </span>
+                                                        )}
                                                     </ItemContent>
                                                     <ItemActions className="flex gap-1">
                                                         <Button variant="ghost" size="icon" onClick={() => openEdit(child)}>

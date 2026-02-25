@@ -6,10 +6,6 @@ create type account_type as enum ('checking', 'savings', 'credit', 'cash', 'inve
 
 create type transaction_direction as enum ('debit', 'credit');
 
-create type recurrence_frequency as enum ('daily', 'weekly', 'monthly', 'yearly');
-
-create type budget_period as enum ('monthly', 'yearly');
-
 create type account_role as enum ('owner', 'editor', 'viewer');
 
 -- ============================
@@ -43,21 +39,13 @@ create table public.categories (
     id uuid primary key default gen_random_uuid (),
     user_id uuid not null references profiles (id) on delete cascade,
     name text not null,
+    budget_amount numeric,
     parent_id uuid references public.categories (id),
     created_at timestamptz default now(),
     unique (user_id, name)
 );
 
 alter table public.categories enable row level security;
-
--- ===== Tags =====
-create table public.tags (
-    id uuid primary key default gen_random_uuid (),
-    user_id uuid not null references profiles (id) on delete cascade,
-    name text not null,
-    created_at timestamptz default now(),
-    unique (user_id, name)
-);
 
 -- ===== Transactions =====
 create table public.transactions (
@@ -84,43 +72,9 @@ create index on public.transactions (category_id);
 
 create index on public.transactions (account_id);
 
--- ===== Transaction Imports =====
-create table public.transaction_imports (
-    id uuid primary key default gen_random_uuid (),
-    user_id uuid not null references profiles (id),
-    provider text not null,
-    external_id text not null,
-    transaction_id uuid references public.transactions (id),
-    imported_at timestamptz default now(),
-    unique (
-        user_id,
-        provider,
-        external_id
-    )
-);
-
--- ===== Budgets =====
-create table public.budgets (
-    id uuid primary key default gen_random_uuid (),
-    user_id uuid not null references profiles (id),
-    category_id uuid references public.categories (id),
-    period budget_period not null default 'monthly',
-    amount numeric not null,
-    created_at timestamptz default now(),
-    unique (user_id, category_id, period)
-);
-
-alter table public.budgets enable row level security;
-
 -- ===== Account Balances =====
 create table public.account_balances (
     account_id uuid primary key references public.accounts (id) on delete cascade,
-    balance numeric not null default 0,
-    updated_at timestamptz default now()
-);
-
-create table public.budget_balances (
-    budget_id uuid primary key references public.budgets (id) on delete cascade,
     balance numeric not null default 0,
     updated_at timestamptz default now()
 );
@@ -232,6 +186,7 @@ returns table (
     name text,
     parent_id uuid,
     budget_amount numeric,
+    totaled_budget numeric,
     spent numeric,
     remaining numeric
 )
@@ -245,20 +200,19 @@ category_data as (
         c.id,
         c.name,
         c.parent_id,
-        coalesce(b.amount, 0) as direct_budget,
-        b.amount is not null as has_budget,
+        c.budget_amount,
+        coalesce(c.budget_amount, 0) as direct_budget,
+        c.budget_amount is not null as has_budget,
         abs(coalesce(s.spent, 0)) as spent
     from public.categories c
     left join spending s on s.category_id = c.id
-    left join public.budgets b
-        on b.category_id = c.id
-        and b.period = 'monthly'
 ),
 aggregated as (
     select
         cd.id,
         cd.name,
         cd.parent_id,
+        cd.budget_amount,
         cd.direct_budget + coalesce((
             select sum(child.direct_budget)
             from category_data child
@@ -268,6 +222,10 @@ aggregated as (
             select 1 from category_data child
             where child.parent_id = cd.id and child.has_budget
         ) as has_any_budget,
+        exists(
+            select 1 from category_data child
+            where child.parent_id = cd.id
+        ) as is_parent,
         cd.spent
     from category_data cd
 )
@@ -275,7 +233,8 @@ select
     a.id,
     a.name,
     a.parent_id,
-    case when a.has_any_budget then a.total_budget else null end as budget_amount,
+    a.budget_amount,
+    case when a.is_parent then a.total_budget else null end as totaled_budget,
     a.spent,
     case when a.has_any_budget then a.total_budget - a.spent else null end as remaining
 from aggregated a
@@ -399,7 +358,6 @@ update using (
 );
 
 create policy "Allow admin delete access" on public.accounts for delete using (public.is_admin ());
-
 -- Account Members Table
 alter table public.account_members enable row level security;
 
@@ -469,19 +427,3 @@ create policy "Allow admin update access" on public.categories for
 update using (public.is_admin ());
 
 create policy "Allow admin delete access" on public.categories for delete using (public.is_admin ());
-
--- Budgets
-create policy "Allow authenticated read access" on public.budgets for
-select using (
-        auth.role () = 'authenticated'
-    );
-
-create policy "Allow admin insert access" on public.budgets for
-insert
-with
-    check (public.is_admin ());
-
-create policy "Allow admin update access" on public.budgets for
-update using (public.is_admin ());
-
-create policy "Allow admin delete access" on public.budgets for delete using (public.is_admin ());

@@ -36,10 +36,6 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {user ?
-          <MainMenu user={profile} accounts={accounts} />
-        : null
-        }
         {children}
         <Toaster expand={true} position="bottom-center" />
       </body>
