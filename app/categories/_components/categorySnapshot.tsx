@@ -1,13 +1,13 @@
 'use client'
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CategoryWithBudget } from "@/schemas";
+import { CategoryWithSpending } from "@/schemas";
 import { Pie, PieChart, Label } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Progress } from "@/components/ui/progress";
 
 interface CategorySnapshotProps {
-    categories: CategoryWithBudget[];
+    categories: CategoryWithSpending[];
     className?: string;
     month?: Date;
 }

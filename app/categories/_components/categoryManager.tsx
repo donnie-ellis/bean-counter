@@ -189,7 +189,6 @@ export default function CategoryManager({ categories, className = "" }: Category
                         </DialogTitle>
                     </DialogHeader>
                     <CategoryForm
-                        isCompact={false}
                         isCreate={!editing}
                         categories={categories}
                         category={editing}

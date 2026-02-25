@@ -23,8 +23,7 @@ const getColor = (name: string) =>
     `hsl(${name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360}, 70%, 50%)`
 
 export const CategoryBudgetCard = ({ category, allCategories, className = "" }: CategoryBudgetCardProps) => {
-    const hasBudget = !!category.budget_amount && category.budget_amount !== 0;
-    const budget = category.budget_amount || category.total_budget || 0;
+    const budget = category.totaled_budget || category.budget_amount || 0;
     const percentageSpent = budget !== 0 ?category.spent / budget * 100 : 0
 
     const color = getColor(category.name);
@@ -83,7 +82,7 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
                                 ${category.spent.toLocaleString()}
                             </span>
                         </div>
-                        {hasBudget && (
+                        {budget !== 0 && (
                             <>
                                 <span className="text-foreground/20 text-xs">/</span>
                                 <div className="flex flex-col">
@@ -97,7 +96,7 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
                     </div>
 
                     {/* Progress or no-budget */}
-                    {hasBudget ? (
+                    {budget !== 0 ? (
                         <div className="space-y-2">
                             <Progress
                                 value={Math.min(percentageSpent, 100)}
@@ -119,7 +118,7 @@ export const CategoryBudgetCard = ({ category, allCategories, className = "" }: 
                 </div>
 
                 {/* Gauge or untracked indicator */}
-                {hasBudget ? (
+                {budget !== 0 ? (
                     <ChartContainer config={chartConfig} className="w-[100px] h-[100px] flex-shrink-0">
                         <RadialBarChart
                             data={chartData}

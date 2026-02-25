@@ -17,7 +17,7 @@ export async function getCategories(): Promise<Category[]> {
     }
     const { data, error } = await supabase
         .from('categories')
-        .select('id, name, user_id, created_at, parent_id')
+        .select('id, name, user_id, created_at, parent_id, budget_amount')
         .order('name');
     if (error) {
         console.error('Error fetching categories:', error);
@@ -53,7 +53,7 @@ export async function getCategory(id: string): Promise<Category> {
     }
     const { data, error } = await supabase
         .from('categories')
-        .select('id, name, user_id, created_at, parent_id')
+        .select('id, name, user_id, created_at, parent_id, budget_amount')
         .eq('id', id)
         .single();
     if (error) {
