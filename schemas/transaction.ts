@@ -32,7 +32,6 @@ export const TransactionSchema = BaseEntitySchema.extend({
     is_pending: z.boolean(),
     notes: z.string().nullable(),
     raw_data: z.record(z.string(), z.any()).nullable(),
-    member_id : z.string().uuid(),
 });
 
 // Create Transaction

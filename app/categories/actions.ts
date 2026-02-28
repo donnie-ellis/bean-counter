@@ -5,7 +5,6 @@
 import { getUser } from '@/lib/auth/getUser';
 import { createClient } from '@/lib/supabase/server';
 import { Category, UpdateCategoryForm, InsertCategoryForm, CreateCategorySchema, UpdateCategorySchema, CategoryWithSpending, CategoryList } from '@/schemas'
-import { TrainTrack } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 
 // Get all categories
@@ -17,7 +16,7 @@ export async function getCategories(): Promise<Category[]> {
     }
     const { data, error } = await supabase
         .from('categories')
-        .select('id, name, user_id, created_at, parent_id, budget_amount')
+        .select('id, name, created_at, parent_id, budget_amount')
         .order('name');
     if (error) {
         console.error('Error fetching categories:', error);
@@ -53,7 +52,7 @@ export async function getCategory(id: string): Promise<Category> {
     }
     const { data, error } = await supabase
         .from('categories')
-        .select('id, name, user_id, created_at, parent_id, budget_amount')
+        .select('id, name, created_at, parent_id, budget_amount')
         .eq('id', id)
         .single();
     if (error) {
@@ -70,14 +69,14 @@ export async function createCategory(category: InsertCategoryForm): Promise<Cate
     if (!user) {
         throw new Error('Not authenticated');
     }
-    const validatedData = CreateCategorySchema.safeParse({ ...category, user_id: user.id });
+    const validatedData = CreateCategorySchema.safeParse(category);
     if (!validatedData.success) {
         console.error('Validation failed:', validatedData.error);
         throw new Error('Validation failed');
     }
     const { data, error } = await supabase
         .from('categories')
-        .insert({ ...validatedData.data, user_id: user.id })
+        .insert(validatedData.data)
         .select()
         .single();
     if (error) {
@@ -95,7 +94,7 @@ export async function updateCategory(id: string, category: UpdateCategoryForm): 
     if (!user) {
         throw new Error('Not authenticated');
     }
-    const validatedData = UpdateCategorySchema.safeParse({ ...category, user_id: user.id });
+    const validatedData = UpdateCategorySchema.safeParse(category);
     if (!validatedData.success) {
         console.error('Validation failed:', validatedData.error);
         throw new Error('Validation failed');

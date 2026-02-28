@@ -22,7 +22,7 @@ export async function getAccounts(): Promise<Account[]> {
 
     const { data, error } = await supabase
         .from('accounts')
-        .select('id, name, type, institution, credit_limit, is_active, created_at, user_id')
+        .select('id, name, type, institution, credit_limit, is_active, created_at')
         .order('created_at', { ascending: false });
 
     if (error || !data) {
@@ -44,7 +44,7 @@ export async function getAccount(id: string): Promise<Account> {
 
     const { data, error } = await supabase
         .from('accounts')
-        .select('id, name, type, institution, credit_limit, is_active, created_at, user_id')
+        .select('id, name, type, institution, credit_limit, is_active, created_at')
         .eq('id', id)
         .order('created_at', { ascending: false })
         .single();
@@ -257,7 +257,7 @@ export async function getAllAccountsWithMembers(): Promise<AccountWithMembers[]>
     const { data, error } = await supabase
         .from('accounts')
         .select(`
-            id, name, type, institution, credit_limit, is_active, created_at, user_id,
+            id, name, type, institution, credit_limit, is_active, created_at,
             account_members (
                 user_id, role
             )

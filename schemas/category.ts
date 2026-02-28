@@ -7,7 +7,6 @@ import { BaseEntitySchema } from '@/schemas/base';
 
 // Category
 export const CategorySchema = BaseEntitySchema.extend({
-    user_id: z.string().uuid(),
     name: z.string().trim().min(1, 'Name is required').max(255),
     parent_id: z.string().uuid().nullable(),
     budget_amount: z.number().positive(),

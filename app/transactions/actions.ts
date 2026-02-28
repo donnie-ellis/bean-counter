@@ -37,7 +37,6 @@ export async function getTransactions({
           created_at,
           user_id,
           account_id,
-          member_id,
           direction,
           amount,
           description,
@@ -92,7 +91,6 @@ export async function getTransactions({
         created_at,
         user_id,
         account_id,
-        member_id,
         direction,
         amount,
         description,
@@ -125,7 +123,7 @@ export async function getTransactionsForAccount(accountId: string): Promise<Tran
 
     const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, user_id, account_id, member_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
+        .select('id, created_at, user_id, account_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
         .eq('account_id', accountId)
         .order('created_at', { ascending: false });
     if (error || !data) {
@@ -146,7 +144,7 @@ export async function getTransactionsForCategory(categoryId: string): Promise<Tr
 
     const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, user_id, account_id, member_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
+        .select('id, created_at, user_id, account_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
         .eq('category_id', categoryId)
         .order('created_at', { ascending: false });
     if (error || !data) {
@@ -166,7 +164,7 @@ export async function getTransaction(id: string): Promise<Transaction> {
 
     const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, user_id, account_id, member_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
+        .select('id, created_at, user_id, account_id, direction, amount, description, merchant, category_id, occurred_at, is_pending, notes, raw_data')
         .eq('id', id)
         .order('created_at', { ascending: false })
         .single();
@@ -186,7 +184,7 @@ export async function insertTransaction(transaction: CreateTransactionForm): Pro
     const supabase = await createClient();
 
     //Validate the form data
-    const validatedInput = CreateTransactionSchema.safeParse({ ...transaction, user_id: user.id });
+    const validatedInput = CreateTransactionSchema.safeParse(transaction);
     if (!validatedInput.success) {
         console.error('Validation failed: ', validatedInput.error)
         throw new Error('Validation failed');

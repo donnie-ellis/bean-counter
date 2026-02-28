@@ -16,7 +16,6 @@ export const AccountTypeSchema = z.enum([
 
 // Account
 export const AccountSchema = BaseEntitySchema.extend({
-    user_id: z.string().uuid(),
     name: z.string().trim().min(1, 'Name is required').max(255),
     type: AccountTypeSchema,
     institution: z.string().trim().max(255).nullable(),
@@ -31,7 +30,6 @@ export const CreateAccountSchema = z.object({
     institution: z.string().trim().max(255).nullable().optional(),
     credit_limit: z.number().nullable().optional(),
     is_active: z.boolean().optional(),
-    user_id: z.string().uuid(),
 });
 
 // Account with Members
@@ -44,7 +42,6 @@ export const AccountWithMembersSchema = AccountSchema.extend({
 
 // Create Account Form (without user_id, account_members, and timestamps)
 export const CreateAccountFormSchema = AccountWithMembersSchema.omit({
-    user_id: true,
     id: true,
     created_at: true,
 });

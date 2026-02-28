@@ -83,7 +83,6 @@ export default async function Home({ searchParams, }: HomeProps) {
                             <div className="flex flex-1 justify-around md:justify-end md:gap-1">
 
                                 <TabsTrigger value="reports">Activity</TabsTrigger>
-                                <TabsTrigger value="accounts">Accounts</TabsTrigger>
                                 {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
                             </div>
                         </TabsList>
