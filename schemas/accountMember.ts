@@ -19,12 +19,6 @@ export const CreateAccountMemberSchema = AccountMemberSchema.omit({
     created_at: true,
 });
 
-// Update AccountMember
-export const UpdateAccountMemberSchema = z.object({
-    role: AccountRoleSchema,
-});
 
 // Type
 export type AccountRole = z.infer<typeof AccountRoleSchema>;
-export type AccountMember = z.infer<typeof AccountMemberSchema>;
-export type CreateAccountMemberForm = z.infer<typeof CreateAccountMemberSchema>;

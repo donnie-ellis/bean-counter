@@ -39,25 +39,6 @@ export const CreateTransactionSchema = TransactionSchema.omit({ id: true, create
 
 export const CreateTransactionFormSchema = TransactionSchema.omit({ id: true, created_at: true, raw_data: true });
 
-// Update Transaction
-export const UpdateTransactionSchema = CreateTransactionSchema.partial();
-
-// TransactionWithRelation
-export const TransactionWithRelationsSchema = TransactionSchema.extend({
-    account: z.object({
-        id: z.string().uuid(),
-        name: z.string(),
-    }).optional(),
-    member: z.object({
-        id: z.string().uuid(),
-        name: z.string(),
-    }).optional(),
-    category: z.object({
-        id: z.string().uuid(),
-        name: z.string(),
-    }).optional(),
-});
-
 // Rules
 TransactionSchema.superRefine((data, ctx) => {
     if (data.amount <= 0) {
@@ -70,7 +51,5 @@ TransactionSchema.superRefine((data, ctx) => {
 });
 
 // Types
-export type TransactionDirection = z.infer<typeof TransactionDirectionSchema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
 export type CreateTransactionForm = z.infer<typeof CreateTransactionFormSchema>;
-export type UpdateTransactionForm = z.infer<typeof UpdateTransactionSchema>;

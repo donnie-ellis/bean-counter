@@ -16,8 +16,6 @@ import { CreateTransactionButton } from "@/app/transactions/_components/createTr
 import { getSmallProfiles } from "@/app/profile/actions";
 import MonthPicker from "@/components/monthPicker";
 import DailyTotals from "@/components/dailyTotals";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import AdminMenu from "./admin/_components/adminMenu";
 
 interface HomeProps {

@@ -56,7 +56,3 @@ export type Account = z.infer<typeof AccountSchema>;
 export type AccountWithMembers = z.infer<typeof AccountWithMembersSchema>;
 
 export type CreateAccountForm = z.infer<typeof CreateAccountFormSchema>;
-
-export type UpdateAccountForm = z.infer<typeof UpdateAccountSchema>;
-
-export type AccountType = z.infer<typeof AccountTypeSchema>;

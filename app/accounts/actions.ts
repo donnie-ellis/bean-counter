@@ -7,7 +7,6 @@ import { Account,
     CreateAccountMemberSchema,
     CreateAccountFormSchema,
     AccountWithMembers,
-    AccountMember
 } from "@/schemas";
 import { getUser } from "@/lib/auth/getUser";
 
@@ -26,30 +25,6 @@ export async function getAccounts(): Promise<Account[]> {
         .order('created_at', { ascending: false });
 
     if (error || !data) {
-        console.error('Error retrieving accounts: ', error)
-        throw new Error('Failed to retrieve accounts');
-    }
-
-    return data;
-}
-
-// Select a single account
-export async function getAccount(id: string): Promise<Account> {
-    const user = await getUser();
-    if (!user) {
-        throw new Error('Not authenticated');
-    }
-
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-        .from('accounts')
-        .select('id, name, type, institution, credit_limit, is_active, created_at')
-        .eq('id', id)
-        .order('created_at', { ascending: false })
-        .single();
-
-    if (error) {
         console.error('Error retrieving accounts: ', error)
         throw new Error('Failed to retrieve accounts');
     }
@@ -223,27 +198,6 @@ export async function deleteAccount(id: string): Promise<void> {
         throw new Error('Failed to delete account');
     }
     return;
-}
-
-export async function getAccountMembers(account_id: string): Promise<AccountMember[]> {
-    const user = await getUser();
-    if (!user) {
-        throw new Error('Not authenticated');
-    }
-
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-        .from('account_members')
-        .select('id, account_id, user_id, role, created_at')
-        .eq('account_id', account_id);
-
-    if (error) {
-        console.error('Error retrieving account members: ', error)
-        throw new Error('Failed to retrieve account members');
-    }
-
-    return data;
 }
 
 export async function getAllAccountsWithMembers(): Promise<AccountWithMembers[]> {

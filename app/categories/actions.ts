@@ -43,25 +43,6 @@ export async function getCategoryList(): Promise<CategoryList> {
     return data;
 }
 
-// Get a single category
-export async function getCategory(id: string): Promise<Category> {
-    const supabase = await createClient();
-    const user = await getUser();
-    if (!user) {
-        throw new Error('Not authenticated');
-    }
-    const { data, error } = await supabase
-        .from('categories')
-        .select('id, name, created_at, parent_id, budget_amount')
-        .eq('id', id)
-        .single();
-    if (error) {
-        console.error('Error fetching category:', error);
-        throw new Error('Failed to fetch category');
-    }
-    return data
-}
-
 // Insert a category
 export async function createCategory(category: InsertCategoryForm): Promise<Category> {
     const supabase = await createClient();

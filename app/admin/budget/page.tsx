@@ -6,8 +6,10 @@ import { getAllAccountsWithMembers } from "@/app/accounts/actions";
 import AccountManager from "@/app/accounts/_components/accountManager";
 import { getSmallProfiles } from "@/app/profile/actions";
 import AdminMenu from "@/app/admin/_components/adminMenu";
+import { requireRole } from "@/lib/auth/requireRole";
 
 export default async function BudgetAdminPage() {
+    await requireRole('admin')
     const categories = await getCategories();
     const accounts = await getAllAccountsWithMembers();
     const profiles = await getSmallProfiles();
