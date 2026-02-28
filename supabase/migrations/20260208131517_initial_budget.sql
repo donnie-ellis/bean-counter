@@ -3,9 +3,10 @@
 -- ============================
 
 create type account_type as enum ('checking', 'savings', 'credit', 'cash', 'investment');
-create type transaction_direction as enum ('debit', 'credit');
-create type account_role as enum ('owner', 'editor', 'viewer');
 
+create type transaction_direction as enum ('debit', 'credit');
+
+create type account_role as enum ('owner', 'editor', 'viewer');
 
 -- ============================
 -- TABLES
@@ -13,69 +14,76 @@ create type account_role as enum ('owner', 'editor', 'viewer');
 
 -- ===== Accounts =====
 create table public.accounts (
-    id           uuid         primary key default gen_random_uuid(),
-    name         text         not null,
-    type         account_type not null,
-    institution  text,
+    id uuid primary key default gen_random_uuid (),
+    name text not null,
+    type account_type not null,
+    institution text,
     credit_limit numeric,
-    is_active    boolean      default true,
-    created_at   timestamptz  default now()
+    is_active boolean default true,
+    created_at timestamptz default now()
 );
 
 -- ===== Account Members =====
 create table public.account_members (
-    account_id uuid         not null references public.accounts (id) on delete cascade,
-    user_id    uuid         not null references public.profiles (id) on delete cascade,
-    role       account_role not null default 'viewer',
-    created_at timestamptz  default now(),
+    account_id uuid not null references public.accounts (id) on delete cascade,
+    user_id uuid not null references public.profiles (id) on delete cascade,
+    role account_role not null default 'viewer',
+    created_at timestamptz default now(),
     primary key (account_id, user_id)
 );
 
 -- ===== Categories =====
 -- Shared domain-wide. Only admins can create or modify.
 create table public.categories (
-    id            uuid        primary key default gen_random_uuid(),
-    name          text        not null,
+    id uuid primary key default gen_random_uuid (),
+    name text not null,
     budget_amount numeric,
-    parent_id     uuid        references public.categories (id),
-    created_at    timestamptz default now()
+    parent_id uuid references public.categories (id),
+    created_at timestamptz default now()
 );
 
 -- ===== Transactions =====
 create table public.transactions (
-    id          uuid                     primary key default gen_random_uuid(),
-    -- Renamed from member_id to user_id for clarity — semantically this is always a user
-    user_id     uuid                     not null,
-    account_id  uuid                     not null references public.accounts (id),
-    direction   transaction_direction    not null,
-    amount      numeric                  not null check (amount > 0),
+    id          uuid                  primary key default gen_random_uuid(),
+    user_id     uuid                  not null,
+    account_id  uuid                  not null,
+    direction   transaction_direction not null,
+    amount      numeric               not null check (amount > 0),
     description text,
     merchant    text,
-    category_id uuid                     references public.categories (id),
-    occurred_at date                     not null,
-    is_pending  boolean                  default false,
+    category_id uuid,
+    occurred_at date                  not null,
+    is_pending  boolean               default false,
     notes       text,
     raw_data    jsonb,
-    created_at  timestamptz              default now(),
-    -- Ensures the user_id is a valid member of the account
-    constraint fk_transaction_account_member
-        foreign key (account_id, user_id)
-        references public.account_members (account_id, user_id)
-        on delete cascade
+    created_at  timestamptz           default now(),
+    constraint fk_transaction_user
+        foreign key (user_id)
+        references public.profiles (id),
+    constraint fk_transaction_account
+        foreign key (account_id)
+        references public.accounts (id)
+        on delete cascade,
+    constraint fk_transaction_category
+        foreign key (category_id)
+        references public.categories (id)
+        on delete set null
 );
 
 create index on public.transactions (occurred_at);
+
 create index on public.transactions (category_id);
+
 create index on public.transactions (account_id);
+
 create index on public.transactions (user_id);
 
 -- ===== Account Balances =====
 create table public.account_balances (
-    account_id uuid    primary key references public.accounts (id) on delete cascade,
-    balance    numeric not null default 0,
-    updated_at timestamptz     default now()
+    account_id uuid primary key references public.accounts (id) on delete cascade,
+    balance numeric not null default 0,
+    updated_at timestamptz default now()
 );
-
 
 -- ============================
 -- HELPER FUNCTIONS
@@ -100,53 +108,46 @@ $$;
 -- Returns true if the current user has any membership on the given account
 create or replace function public.has_account_access(acc_id uuid)
 returns boolean
-language sql
-stable
-security definer
+language sql stable security definer
 set search_path = public
 as $$
-    select exists (
-        select 1
-        from public.account_members am
+    select public.is_admin()
+    or exists (
+        select 1 from public.account_members am
         where am.account_id = acc_id
-          and am.user_id    = auth.uid()
+          and am.user_id = auth.uid()
     );
 $$;
 
 -- Returns true if the current user is an owner or editor on the given account
 create or replace function public.has_account_write_access(acc_id uuid)
 returns boolean
-language sql
-stable
-security definer
+language sql stable security definer
 set search_path = public
 as $$
-    select exists (
-        select 1
-        from public.account_members am
+    select public.is_admin()
+    or exists (
+        select 1 from public.account_members am
         where am.account_id = acc_id
-          and am.user_id    = auth.uid()
-          and am.role       in ('owner', 'editor')
+          and am.user_id = auth.uid()
+          and am.role in ('owner', 'editor')
     );
 $$;
 
 -- Returns true if the current user is an owner of the given account
 create or replace function public.is_account_owner(acc_id uuid)
 returns boolean
-language sql
-stable
-security definer
+language sql stable security definer
 set search_path = public
 as $$
-    select exists (
-        select 1
-        from public.account_members am
+    select public.is_admin()
+    or exists (
+        select 1 from public.account_members am
         where am.account_id = acc_id
-          and am.user_id    = auth.uid()
-          and am.role       = 'owner'
+          and am.user_id = auth.uid()
+          and am.role = 'owner'
     );
 $$;
-
 
 -- ============================
 -- BUSINESS LOGIC FUNCTIONS
@@ -330,7 +331,6 @@ as $$
         a.parent_id nulls first;
 $$;
 
-
 -- ============================
 -- TRIGGERS
 -- ============================
@@ -340,6 +340,8 @@ $$;
 create or replace function public.initialize_account_balance()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 begin
     insert into public.account_balances (account_id, balance)
@@ -356,6 +358,7 @@ create trigger trg_initialize_account_balance
 create or replace function public.update_account_balance()
 returns trigger
 language plpgsql
+security definer
 as $$
 declare
     acc_type account_type;
@@ -390,7 +393,6 @@ create trigger trg_update_account_balance
     after insert or update or delete on public.transactions
     for each row execute function public.update_account_balance();
 
-
 -- ============================
 -- ROW LEVEL SECURITY
 -- ============================
@@ -400,42 +402,46 @@ create trigger trg_update_account_balance
 -- Any member can read accounts they belong to.
 alter table public.accounts enable row level security;
 
-create policy "accounts: members can read"
-    on public.accounts for select
-    using (public.has_account_access(id));
+create policy "accounts: members can read" on public.accounts for
+select using (
+        public.has_account_access (id)
+    );
 
-create policy "accounts: admins can insert"
-    on public.accounts for insert
-    with check (public.is_admin());
+create policy "accounts: admins can insert" on public.accounts for
+insert
+with
+    check (public.is_admin ());
 
-create policy "accounts: owners can update"
-    on public.accounts for update
-    using (public.is_account_owner(id));
+create policy "accounts: owners can update" on public.accounts for
+update using (public.is_account_owner (id));
 
-create policy "accounts: owners can delete"
-    on public.accounts for delete
-    using (public.is_account_owner(id));
+create policy "accounts: owners can delete" on public.accounts for delete using (public.is_account_owner (id));
 
 -- ===== Account Members =====
 -- Any member can see the membership list for their accounts.
 -- Only owners manage membership (invite, change role, remove).
 alter table public.account_members enable row level security;
 
-create policy "account_members: members can read"
-    on public.account_members for select
-    using (public.has_account_access(account_id));
+create policy "account_members: members can read" on public.account_members for
+select using (
+        public.has_account_access (account_id)
+    );
 
-create policy "account_members: owners can insert"
-    on public.account_members for insert
-    with check (public.is_account_owner(account_id));
+create policy "account_members: owners can insert" on public.account_members for
+insert
+with
+    check (
+        public.is_account_owner (account_id)
+    );
 
-create policy "account_members: owners can update"
-    on public.account_members for update
-    using (public.is_account_owner(account_id));
+create policy "account_members: owners can update" on public.account_members for
+update using (
+    public.is_account_owner (account_id)
+);
 
-create policy "account_members: owners can delete"
-    on public.account_members for delete
-    using (public.is_account_owner(account_id));
+create policy "account_members: owners can delete" on public.account_members for delete using (
+    public.is_account_owner (account_id)
+);
 
 -- NOTE: Admins need to bootstrap the first owner row after account creation.
 -- Because is_account_owner() will return false for a brand-new account with no members,
@@ -447,22 +453,30 @@ create policy "account_members: owners can delete"
 -- Any account member can read transactions. Owners and editors can write.
 alter table public.transactions enable row level security;
 
-create policy "transactions: members can read"
-    on public.transactions for select
-    using (public.has_account_access(account_id));
+create policy "transactions: members can read" on public.transactions for
+select using (
+        public.has_account_access (account_id)
+    );
 
-create policy "transactions: owners and editors can insert"
-    on public.transactions for insert
-    with check (public.has_account_write_access(account_id));
+create policy "transactions: owners and editors can insert" on public.transactions for
+insert
+with
+    check (
+        public.has_account_write_access (account_id)
+    );
 
-create policy "transactions: owners and editors can update"
-    on public.transactions for update
-    using (public.has_account_write_access(account_id))
-    with check (public.has_account_write_access(account_id));
+create policy "transactions: owners and editors can update" on public.transactions for
+update using (
+    public.has_account_write_access (account_id)
+)
+with
+    check (
+        public.has_account_write_access (account_id)
+    );
 
-create policy "transactions: owners and editors can delete"
-    on public.transactions for delete
-    using (public.has_account_write_access(account_id));
+create policy "transactions: owners and editors can delete" on public.transactions for delete using (
+    public.has_account_write_access (account_id)
+);
 
 -- ===== Account Balances =====
 -- Balances are derived data maintained exclusively by the update_account_balance trigger.
@@ -470,27 +484,27 @@ create policy "transactions: owners and editors can delete"
 -- No direct insert/update/delete is permitted from the client layer.
 alter table public.account_balances enable row level security;
 
-create policy "account_balances: members can read"
-    on public.account_balances for select
-    using (public.has_account_access(account_id));
+create policy "account_balances: members can read" on public.account_balances for
+select using (
+        public.has_account_access (account_id)
+    );
 
 -- ===== Categories =====
 -- Shared domain-wide. All authenticated users can read.
 -- Only admins can create, modify, or delete categories.
 alter table public.categories enable row level security;
 
-create policy "categories: authenticated users can read"
-    on public.categories for select
-    using (auth.role() = 'authenticated');
+create policy "categories: authenticated users can read" on public.categories for
+select using (
+        auth.role () = 'authenticated'
+    );
 
-create policy "categories: admins can insert"
-    on public.categories for insert
-    with check (public.is_admin());
+create policy "categories: admins can insert" on public.categories for
+insert
+with
+    check (public.is_admin ());
 
-create policy "categories: admins can update"
-    on public.categories for update
-    using (public.is_admin());
+create policy "categories: admins can update" on public.categories for
+update using (public.is_admin ());
 
-create policy "categories: admins can delete"
-    on public.categories for delete
-    using (public.is_admin());
+create policy "categories: admins can delete" on public.categories for delete using (public.is_admin ());
