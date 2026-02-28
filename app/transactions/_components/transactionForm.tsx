@@ -9,7 +9,6 @@ import {
     CreateTransactionFormSchema,
     Transaction,
     Account,
-    Category,
     SmallProfile,
     CategoryList
 } from '@/schemas';
@@ -56,7 +55,7 @@ export default function TransactionForm({
         resolver: zodResolver(CreateTransactionFormSchema),
         defaultValues: {
             account_id: transaction?.account_id || '',
-            member_id: transaction?.member_id ?? currentUserId,
+            user_id: transaction?.user_id ?? currentUserId,
             direction: transaction?.direction || 'debit',
             amount: transaction?.amount || 0,
             description: transaction?.description || null,
@@ -151,7 +150,7 @@ export default function TransactionForm({
 
                 {/* Cardholder */}
                 <Controller
-                    name="member_id"
+                    name="user_id"
                     control={control}
                     render={({ field, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>

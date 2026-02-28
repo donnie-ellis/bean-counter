@@ -33,7 +33,6 @@ export function AccountForm({
     onSubmit,
     isSubmitting = false,
     isCreate = true,
-    isCompact = false
 }: AccountFormProps ) {
 
     const { control, handleSubmit, watch } = useForm<CreateAccountForm>({
@@ -100,7 +99,7 @@ export function AccountForm({
                             <SelectContent>
                                 <SelectItem value="checking">Checking</SelectItem>
                                 <SelectItem value="savings">Savings</SelectItem>
-                                <SelectItem value="credit_card">Credit Card</SelectItem>
+                                <SelectItem value="credit">Credit Card</SelectItem>
                                 <SelectItem value="cash">Cash</SelectItem>
                                 <SelectItem value="investment">Investment</SelectItem>
                                 <SelectItem value="loan">Loan</SelectItem>
@@ -262,7 +261,7 @@ export function AccountForm({
             />
 
             {/* Credit Limit */}
-            {accountType === 'credit_card' && (
+            {accountType === 'credit' && (
                 <Controller
                     name="credit_limit"
                     control={control}

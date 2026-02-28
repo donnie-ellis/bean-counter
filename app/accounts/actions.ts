@@ -74,7 +74,7 @@ export async function insertAccount(input: CreateAccountForm): Promise<AccountWi
     
     // Extract account member IDs and prepare account data for insertion
     const { account_members, ...accountData } = validatedInput.data;
-    const validatedData = CreateAccountSchema.safeParse({ ...accountData, user_id: user.id });
+    const validatedData = CreateAccountSchema.safeParse(accountData);
     if (!validatedData.success) {
         console.error('Validation failed:', validatedData.error);
         throw new Error('Validation failed');

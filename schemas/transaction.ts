@@ -37,7 +37,7 @@ export const TransactionSchema = BaseEntitySchema.extend({
 // Create Transaction
 export const CreateTransactionSchema = TransactionSchema.omit({ id: true, created_at: true, raw_data: true });
 
-export const CreateTransactionFormSchema = TransactionSchema.omit({ id: true, created_at: true, user_id: true, raw_data: true });
+export const CreateTransactionFormSchema = TransactionSchema.omit({ id: true, created_at: true, raw_data: true });
 
 // Update Transaction
 export const UpdateTransactionSchema = CreateTransactionSchema.partial();

@@ -8,7 +8,7 @@ import { BaseEntitySchema } from '@/schemas/base';
 export const AccountTypeSchema = z.enum([
     'checking',
     'savings',
-    'credit_card',
+    'credit',
     'cash',
     'investment',
     'loan',
