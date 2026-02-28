@@ -5,7 +5,7 @@ import { getCategories } from "@/app/categories/actions";
 import { getAllAccountsWithMembers } from "@/app/accounts/actions";
 import AccountManager from "@/app/accounts/_components/accountManager";
 import { getSmallProfiles } from "@/app/profile/actions";
-import Link from "next/link";
+import AdminMenu from "@/app/admin/_components/adminMenu";
 
 export default async function BudgetAdminPage() {
     const categories = await getCategories();
@@ -13,10 +13,10 @@ export default async function BudgetAdminPage() {
     const profiles = await getSmallProfiles();
 
     return (
-        <main className="lg:flex lg:flex-row px-4 gap-4">
-            <header>
-                <h1 className="text-xl font-bold text-muted-foreground">Bean-Counter admin</h1>
-                <Link href="/">Home</Link>
+        <main className="flex flex-col px-4 gap-4">
+            <header className="flex items-center justify-between mb-6">
+                <h1 className="text-xl font-bold text-muted-foreground">Admin Portal - Accounts and Categories</h1>
+                <AdminMenu />
             </header>
             <section  className="pt-6 flex flex-wrap gap-4">
                 {/* Accounts */}

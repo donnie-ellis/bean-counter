@@ -18,6 +18,7 @@ import MonthPicker from "@/components/monthPicker";
 import DailyTotals from "@/components/dailyTotals";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import AdminMenu from "./admin/_components/adminMenu";
 
 interface HomeProps {
     searchParams: Promise<{
@@ -55,11 +56,7 @@ export default async function Home({ searchParams, }: HomeProps) {
                 <div className="flex flex-col md:flex-row gap-2 p-4">
                         <div className="md:order-1">
                         {profile.role === "admin" && (
-                            <Link href="/admin/budget">
-                                <Badge className="">
-                                    Admin Portal
-                                </Badge>
-                            </Link>         
+                            <AdminMenu />     
                        )}
                        </div>
                         <div className="md:order-2">
