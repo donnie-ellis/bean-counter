@@ -62,7 +62,7 @@ export function CreateTransactionButton({
             <Button 
                 variant={variant}
                 size={size}
-                className={className} 
+                className={className}
                 onClick={() => setOpen(true)}
                 >
                 {buttonText || ''}

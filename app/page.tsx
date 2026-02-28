@@ -1,7 +1,7 @@
 import { requireAuth } from "@/lib/auth/requireAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryBudgetCard } from "@/app/categories/_components/categoryBudgetCard";
-import { getCategories, getCategoriesWithBudget } from "@/app/categories/actions";
+import { getCategoriesWithBudget } from "@/app/categories/actions";
 import { CategoryWithSpending } from "@/schemas";
 import { getProfile } from "@/lib/auth/getProfile";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,9 @@ import TransactionManager from "@/app/transactions/_components/transactionManage
 import { CreateTransactionButton } from "@/app/transactions/_components/createTransactionButton";
 import { getSmallProfiles } from "@/app/profile/actions";
 import MonthPicker from "@/components/monthPicker";
-import AccountManager from "@/app/accounts/_components/accountManager";
-import CategoryManager from "@/app/categories/_components/categoryManager";
 import DailyTotals from "@/components/dailyTotals";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface HomeProps {
     searchParams: Promise<{
@@ -31,7 +31,6 @@ export default async function Home({ searchParams, }: HomeProps) {
     const user = await requireAuth();
     const profile = await getProfile(user.id);
     const categoriesFull = await getCategoriesWithBudget(selectedMonth.toString());
-    const categories = await getCategories();
     const transactions = await getTransactionsByMonth(new Date(selectedMonth));
     const accounts = await getAllAccountsWithMembers();
 
@@ -53,8 +52,19 @@ export default async function Home({ searchParams, }: HomeProps) {
                     <h1 className="text-xl font-bold text-muted-foreground">Hello </h1>
                     <h2 className="text-2xl font-bold text-foreground">{profile.first_name}</h2>
                 </div>
-                <div>
-                    <MonthPicker />
+                <div className="flex flex-col md:flex-row gap-2 p-4">
+                        <div className="md:order-1">
+                        {profile.role === "admin" && (
+                            <Link href="/admin/budget">
+                                <Badge className="">
+                                    Admin Portal
+                                </Badge>
+                            </Link>         
+                       )}
+                       </div>
+                        <div className="md:order-2">
+                        <MonthPicker />
+                        </div>
                 </div>
             </header>
             <main className="min-h-screen mx-auto p-6">
@@ -65,26 +75,10 @@ export default async function Home({ searchParams, }: HomeProps) {
                 <section>
                     {/******************************* Tabs ***********************************/}
                     <Tabs defaultValue="overview" className="w-full">
-                        <TabsList className="bg-accent border-b w-full justify-between fixed bottom-0 left-0 right-0 rounded-none h-14 px-2 md:sticky md:top-0 md:h-10 md:rounded-lg md:justify-between md:w-full">
-                            <div className="flex flex-1 justify-around md:justify-start md:gap-1">
+                        <TabsList className="bg-accent border-b w-full justify-between z-10 fixed bottom-0 left-0 right-0 rounded-none h-14 px-2 md:sticky md:top-0 md:h-10 md:rounded-lg md:justify-between md:w-full">
                                 <TabsTrigger value="overview">Overview</TabsTrigger>
                                 <TabsTrigger value="categories">Categories</TabsTrigger>
-                            </div>
-                            <CreateTransactionButton
-                                variant="default"
-                                size="lg"
-                                categories={categoryList}
-                                accounts={accounts}
-                                users={users}
-                                currentUserId={profile.id}
-                                icon={true}
-                                className="rounded-full h-10 w-10 md:h-20 md:w-20 md:-translate-y-6"
-                            />
-                            <div className="flex flex-1 justify-around md:justify-end md:gap-1">
-
                                 <TabsTrigger value="reports">Activity</TabsTrigger>
-                                {profile.role === "admin" && <TabsTrigger value="admin">Admin</TabsTrigger>}
-                            </div>
                         </TabsList>
 
                         {/******************************* Overview Tab ***********************************/}
@@ -151,17 +145,20 @@ export default async function Home({ searchParams, }: HomeProps) {
                                 categories={categoryList}
                                 className="w-full" />
                         </TabsContent>
-
-                        {/******************************* Admin Tab ***********************************/}
-                        {profile.role === "admin" && (
-                            <TabsContent value="admin" className="pt-6 flex flex-wrap gap-4">
-                                <AccountManager className="w-full md:flex-1" profiles={users} initialAccounts={accounts} />
-                                <CategoryManager className="w-full md:flex-1" categories={categories} />
-                            </TabsContent>
-                        )}
                     </Tabs>
                 </section>
             </main>
+            <CreateTransactionButton
+                variant="default"
+                size="icon"
+                categories={categoryList}
+                accounts={accounts}
+                users={users}
+                currentUserId={profile.id}
+                icon={true}
+                className="fixed bottom-12 right-6 z-50 rounded-full h-12 w-10 md:h-30 md:w-20 shadow-lg opacity-55 hover:opacity-75"
+            />
+
         </>
     );
 }
