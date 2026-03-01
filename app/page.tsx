@@ -151,7 +151,7 @@ export default async function Home({ searchParams, }: HomeProps) {
                 users={users}
                 currentUserId={profile.id}
                 icon={true}
-                className="fixed bottom-12 right-6 z-50 rounded-full h-12 w-10 md:h-30 md:w-20 shadow-lg opacity-55 hover:opacity-75"
+                className="fixed bottom-18 right-4 z-50 rounded-full h-12 w-10 md:h-30 md:w-20 shadow-lg opacity-55 hover:opacity-75"
             />
 
         </>

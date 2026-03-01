@@ -72,7 +72,7 @@ export function CreateTransactionButton({
             </Button>
             {/* Edit form */}
             <Dialog open={open} onOpenChange={setOpen} >
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="w-full sm:max-w-lg max-h-[90dvh] overflow-y-auto">
                     
                     <DialogHeader>
                         <DialogTitle>
