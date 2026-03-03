@@ -16,14 +16,17 @@ import {
     ChartTooltipContent,
     ChartLegend,
     ChartLegendContent,
+    ChartTooltip,
 } from "@/components/ui/chart";
 import { CategoryWithSpending } from "@/schemas";
 import { format } from "date-fns";
+import { useEffect, useState } from "react";
+import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
+import { da, is } from "zod/locales";
 
 interface AnnualCategoryChartProps {
     data: CategoryWithSpending[];
-    monthStarts: Date[]; // parallel array — same order as data
-    categoryName?: string;
+    monthStarts: Date[];
 }
 
 const chartConfig = {
@@ -52,9 +55,18 @@ function formatCurrency(value: number) {
 export default function AnnualCategoryChart({
     data,
     monthStarts,
-    categoryName = '',
 }: AnnualCategoryChartProps) {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
+
     if (!data?.length || !monthStarts?.length) return null;
+
     const chartData = monthStarts
         .map((monthStart, i) => {
             const entry = data[i];
@@ -70,22 +82,16 @@ export default function AnnualCategoryChart({
         .filter((d): d is NonNullable<typeof d> => d !== null)
         .reverse();
 
-    const maxValue = Math.max(...chartData.map((d) => Math.max(d.budget, d.spent)));
+    const visibleData = isMobile ? chartData.slice(-6) : chartData;
+    const highestValue = Math.max(...visibleData.map((d) => Math.max(d.budget * 1.5, d.spent)));
+    const maxValue = Math.ceil(highestValue / 100) * 100;
+    const avgSpent = visibleData.reduce((s, d) => s + d.spent, 0) / visibleData.length;
 
     return (
         <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                    12-Month Spending — <span className="text-foreground font-semibold">{categoryName}</span>
-                </h3>
-                <span className="text-xs text-muted-foreground">
-                    {format(new Date(monthStarts[monthStarts.length - 1]), "MMM yyyy")} –{" "}
-                    {format(new Date(monthStarts[0]), "MMM yyyy")}
-                </span>
-            </div>
 
-            <ChartContainer config={chartConfig} className="h-64 w-full">
-                <BarChart data={chartData} barGap={2} barCategoryGap="25%">
+            <ChartContainer config={chartConfig} className="h-64 w-full min-h-[250px]">
+                <BarChart data={visibleData} barGap={2} barCategoryGap="40%">
                     <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
                     <XAxis
                         dataKey="month"
@@ -97,10 +103,11 @@ export default function AnnualCategoryChart({
                         tickLine={false}
                         axisLine={false}
                         tick={{ fontSize: 11 }}
-                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                        domain={[0, maxValue * 1.1]}
+                        tickFormatter={(v) => `$${v.toLocaleString()}`}
+                        domain={[0, maxValue]}
                     />
-                    <Tooltip
+                    <ChartTooltip
+                        cursor={false}
                         content={
                             <ChartTooltipContent
                                 formatter={(value, name) => [
@@ -110,64 +117,69 @@ export default function AnnualCategoryChart({
                             />
                         }
                     />
-                    <ChartLegend content={<ChartLegendContent />} />
 
-                    {/* Budget line bars (muted, background) */}
-                    <Bar dataKey="budget" name="budget_amount" radius={[3, 3, 0, 0]} maxBarSize={28}>
-                        {chartData.map((entry, i) => (
-                            <Cell
-                                key={i}
-                                fill="hsl(var(--chart-1))"
-                                fillOpacity={0.25}
-                            />
-                        ))}
-                    </Bar>
+                    {/* Single spent bar */}
+                    <Bar dataKey="spent" name="spent" radius={[8, 8, 0, 0]} />
 
-                    {/* Spent bars — red if over budget */}
-                    <Bar dataKey="spent" name="spent" radius={[3, 3, 0, 0]} maxBarSize={28}>
-                        {chartData.map((entry, i) => (
-                            <Cell
-                                key={i}
-                                fill={entry.overBudget ? "hsl(var(--destructive))" : "hsl(var(--chart-2))"}
-                                fillOpacity={0.9}
-                            />
-                        ))}
-                    </Bar>
+                    {/* Dashed budget line across each bar's x position */}
+                    <ReferenceLine
+                        y={chartData[0]?.budget}
+                        stroke="hsl(var(--chart-1))"
+                        strokeDasharray="6 3"
+                        strokeWidth={2}
+                        label={{
+                            value: `Budget: ${formatCurrency(chartData[0]?.budget ?? 0)}`,
+                            position: "insideTopRight",
+                            fontSize: 11,
+                            fill: "hsl(var(--chart-3))",
+                        }}
+                    />
+                    <ReferenceLine
+                        y={avgSpent}
+                        stroke="hsl(var(--chart-4))"
+                        strokeDasharray="3 3"
+                        strokeWidth={1.5}
+                        strokeOpacity={0.8}
+                        label={{
+                            value: `Avg ${formatCurrency(avgSpent)}`,
+                            position: "insideBottomLeft",
+                            fontSize: 11,
+                            fill: "hsl(var(--chart-4))",
+                        }}
+                    />
                 </BarChart>
             </ChartContainer>
 
             {/* Summary strip */}
             <div className="grid grid-cols-3 gap-2 pt-1">
-                {(
-                    [
-                        {
-                            label: "Avg Spent",
-                            value: chartData.reduce((s, d) => s + d.spent, 0) / chartData.length,
-                            muted: false,
-                        },
-                        {
-                            label: "Avg Budget",
-                            value: chartData.reduce((s, d) => s + d.budget, 0) / chartData.length,
-                            muted: true,
-                        },
-                        {
-                            label: "Months Over",
-                            value: chartData.filter((d) => d.overBudget).length,
-                            isCount: true,
-                            danger: chartData.filter((d) => d.overBudget).length > 0,
-                        },
-                    ] as const
-                ).map(({ label, value, muted, isCount, danger }) => (
-                    <div key={label} className="rounded-md border bg-muted/40 px-3 py-2 text-center">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
-                        <p
-                            className={`text-base font-semibold tabular-nums ${danger ? "text-destructive" : muted ? "text-muted-foreground" : "text-foreground"
-                                }`}
-                        >
-                            {isCount ? value : formatCurrency(value)}
-                        </p>
-                    </div>
-                ))}
+                <Item className="rounded-md border bg-muted/40 px-3 py-2 text-center">
+                    <ItemTitle className="text-xs uppercase tracking-wide text-muted-foreground">Avg Spent</ItemTitle>
+                    <ItemContent>
+                        <ItemDescription
+                            className={`text-base font-semibold tabular-nums text-muted-foreground`}>
+                            {formatCurrency(chartData.reduce((s, d) => s + d.spent, 0) / chartData.length)}
+                        </ItemDescription>
+                    </ItemContent>
+                </Item>
+
+                <Item className="rounded-md border bg-muted/40 px-3 py-2 text-center">
+                    <ItemTitle className="text-xs uppercase tracking-wide text-muted-foreground">Budget</ItemTitle>
+                    <ItemContent>
+                        <ItemDescription
+                            className={`text-base font-semibold tabular-nums text-muted-foreground`}>
+                            {formatCurrency(chartData.reduce((s, d) => s + d.budget, 0) / chartData.length)}
+                        </ItemDescription>
+                    </ItemContent>
+                </Item>
+                <Item className="rounded-md border bg-muted/40 px-3 py-2 text-center">
+                    <ItemTitle className="text-xs uppercase tracking-wide text-muted-foreground">Months Over</ItemTitle>
+                    <ItemContent>
+                        <ItemDescription
+                            className={`text-base font-semibold tabular-nums text-destructive`}>
+                            {formatCurrency(chartData.filter((d) => d.overBudget).length)}
+                        </ItemDescription>
+                    </ItemContent>
+                </Item>
             </div>
         </div>
     );

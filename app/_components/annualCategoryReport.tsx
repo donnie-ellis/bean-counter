@@ -7,6 +7,7 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@
 import { getCategoriesWithBudget } from "@/app/categories/actions";
 import AnnualCategoryChart from "./annualCategoryChart";
 import AnnualCategoryChartSkeleton from "./annualCategoryChartSkeleton";
+import { format } from "date-fns";
 
 interface AnnualCategoryReportProps {
     className?: string;
@@ -27,7 +28,7 @@ function getLast12MonthStarts(): Date[] {
     return months;
 }
 
-const MONTH_STARTS = getLast12MonthStarts();
+const monthStarts = getLast12MonthStarts();
 
 export default function AnnualCategoryReport({ className = '', categories }: AnnualCategoryReportProps) {
     const [categoryData, setCategoryData] = useState<CategoryWithSpending[]>([]);
@@ -43,7 +44,7 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
             setLoading(true);
             try {
                 const results = await Promise.all(
-                    MONTH_STARTS.map((monthStart) => getCategoriesWithBudget(monthStart.toISOString()))
+                    monthStarts.map((monthStart) => getCategoriesWithBudget(monthStart.toISOString()))
                 );
                 setCategoryData(results.flat());
             } catch (error) {
@@ -54,7 +55,7 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
         };
 
         fetchData();
-    }, [selectedCategory]);
+    }, [selectedCategory, categories]);
 
     function handleCategoryChange(categoryId: string) {
         const found = categories.find((c) => c.id === categoryId) ?? null;
@@ -64,7 +65,13 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
     return (
         <Card className={className}>
             <CardHeader>
-                <CardTitle>Annual Category Report</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                    <h1 className="text-sm uppercase font-medium text-muted-foreground tracking-wide">Annual Category Report</h1>
+                    <span className="text-xs text-muted-foreground tracking-wide">
+                        {format(new Date(monthStarts[monthStarts.length - 1]), "MMM yyyy")} –{" "}
+                        {format(new Date(monthStarts[0]), "MMM yyyy")}
+                    </span>
+                </CardTitle>
                 <CardDescription>
                     <Select onValueChange={handleCategoryChange} value={selectedCategory?.id ?? ""}>
                         <SelectTrigger>
@@ -86,8 +93,7 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
                 ) : categoryData.length > 0 && selectedCategory ?
                     <AnnualCategoryChart
                         data={categoryData}
-                        monthStarts={MONTH_STARTS}
-                        categoryName={selectedCategory.name}
+                        monthStarts={monthStarts}
                     /> : !selectedCategory ? (
                         <p className="text-sm text-muted-foreground text-center py-8">
                             Select a category to view annual spending
