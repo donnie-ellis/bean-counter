@@ -1,6 +1,6 @@
 // ./app/_components/AnnualCategoryReport.tsx
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CategoryList, CategoryWithSpending } from "@/schemas";
 import { Card, CardHeader, CardDescription, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@/components/ui/select";
@@ -34,6 +34,15 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
     const [categoryData, setCategoryData] = useState<CategoryWithSpending[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<ShortCategory | null>(null);
+    const categoryMap = useMemo(
+        () =>
+            categoryData.reduce((map, cat) => {
+                const existing = map.get(cat.id) ?? [];
+                map.set(cat.id, [...existing, cat]);
+                return map;
+            }, new Map<string, CategoryWithSpending[]>()),
+        [categoryData]
+    );
 
     useEffect(() => {
         if (!selectedCategory) {
@@ -92,7 +101,7 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
                     <AnnualCategoryChartSkeleton />
                 ) : categoryData.length > 0 && selectedCategory ?
                     <AnnualCategoryChart
-                        data={categoryData}
+                        data={categoryMap.get(selectedCategory.id) || []}
                         monthStarts={monthStarts}
                     /> : !selectedCategory ? (
                         <p className="text-sm text-muted-foreground text-center py-8">

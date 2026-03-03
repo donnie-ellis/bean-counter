@@ -6,26 +6,20 @@ import {
     CartesianGrid,
     XAxis,
     YAxis,
-    Tooltip,
     ReferenceLine,
-    ResponsiveContainer,
-    Cell,
 } from "recharts";
 import {
     ChartContainer,
     ChartTooltipContent,
-    ChartLegend,
-    ChartLegendContent,
     ChartTooltip,
 } from "@/components/ui/chart";
 import { CategoryWithSpending } from "@/schemas";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
-import { da, is } from "zod/locales";
 
 interface AnnualCategoryChartProps {
-    data: CategoryWithSpending[];
+    data: CategoryWithSpending[]
     monthStarts: Date[];
 }
 
