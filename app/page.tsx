@@ -11,6 +11,7 @@ import AdminMenu from "./admin/_components/adminMenu";
 import OverViewTab from "./_components/overViewTab";
 import CategoriesTab from "./_components/categoriesTab";
 import TransactionsTab from "./_components/transactionsTab";
+import ReportsTab from "./_components/reportsTab";
 
 interface HomeProps {
     searchParams: Promise<{
@@ -65,6 +66,7 @@ export default async function Home({ searchParams, }: HomeProps) {
                         <TabsList className="bg-accent border-b w-full justify-between z-10 fixed bottom-0 left-0 right-0 rounded-none h-14 px-2 md:sticky md:top-0 md:h-10 md:rounded-lg md:justify-between md:w-full">
                             <TabsTrigger value="overview">Overview</TabsTrigger>
                             <TabsTrigger value="categories">Categories</TabsTrigger>
+                            <TabsTrigger value="reports">Reports</TabsTrigger>
                             <TabsTrigger value="transactions">Activity</TabsTrigger>
                         </TabsList>
 
@@ -80,6 +82,14 @@ export default async function Home({ searchParams, }: HomeProps) {
                             className="p-4 flex flex-col gap-4"
                             categories={categoriesWithBudget}
                         />
+
+                        {/******************************* Reports Tab ***********************************/}
+                        <ReportsTab
+                            className="p-4 flex flex-col gap-4"
+                            categoryList={categoryList}
+                        />
+
+
 
                         {/******************************* Transactions Tab ***********************************/}
                         <TransactionsTab

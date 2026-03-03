@@ -15,7 +15,7 @@ interface TransactionsTabProps {
 export default async function TransactionsTab({ className,categories, accounts, users, currentUserId }: TransactionsTabProps) {
 
     return (
-        <TabsContent value="reports" className={className}>
+        <TabsContent value="transactions" className={className}>
             <TransactionManager
                 accounts={accounts}
                 users={users}
