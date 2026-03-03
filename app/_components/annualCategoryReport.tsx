@@ -35,7 +35,9 @@ export default function AnnualCategoryReport({ className = '', categories }: Ann
     const [selectedCategory, setSelectedCategory] = useState<ShortCategory | null>(null);
 
     useEffect(() => {
-        if (!selectedCategory) return;
+        if (!selectedCategory) {
+            setSelectedCategory(categories[0]);
+        };
 
         const fetchData = async () => {
             setLoading(true);
