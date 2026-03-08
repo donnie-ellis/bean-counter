@@ -33,10 +33,10 @@ export function CreateTransactionButton({
   users = [],
   currentUserId = ''
 }: CreateTransactionButtonProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -85,14 +85,21 @@ export function CreateTransactionButton({
       </Button>
 
       {isMobile ? (
-        <Drawer open={open} onOpenChange={setOpen}>
+        <Drawer open={open} onOpenChange={setOpen} dismissible={false}>
           <DrawerContent>
             <DrawerHeader>
               <DrawerTitle>Add Transaction</DrawerTitle>
             </DrawerHeader>
-            <div className="px-4 pb-6 overflow-y-auto">
+            <div className="overflow-y-auto flex-1 px-4 pb-8">
               {formContent}
             </div>
+            <Button
+              variant="outline"
+              className="mx-4 mb-4"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
           </DrawerContent>
         </Drawer>
       ) : (
