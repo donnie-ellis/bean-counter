@@ -1,12 +1,12 @@
 // ./app/_components/transactionsTab.tsx
 
 import TransactionManager from "@/app/transactions/_components/transactionManager";
-import { AccountWithMembers, CategoryList, SmallProfile } from "@/schemas";
+import { AccountWithMembers, SmallProfile, CategoryWithSpending } from "@/schemas";
 import { TabsContent } from "@/components/ui/tabs";
 
 interface TransactionsTabProps {
     className?: string;
-    categories: CategoryList;
+    categories: CategoryWithSpending[];
     accounts: AccountWithMembers[];
     users: SmallProfile[];
     currentUserId: string;

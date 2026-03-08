@@ -10,7 +10,7 @@ import {
     Transaction,
     Account,
     SmallProfile,
-    CategoryList
+    CategoryWithSpending
 } from '@/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
     SelectTrigger,
     SelectValue,
@@ -27,10 +28,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
+import { buildTree } from '@/lib/category';
+import { useMemo } from 'react';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
-    categories: CategoryList;
+    categories: CategoryWithSpending[];
     accounts: Account[];
     users: SmallProfile[];
     onSubmit: (data: CreateTransactionForm) => Promise<void>;
@@ -66,6 +69,7 @@ export default function TransactionForm({
             notes: transaction?.notes || null,
         }
     });
+    const categoryTree = useMemo(() => buildTree(categories), [categories]);
 
     const getSubmitButtonText = () => {
         if (isSubmitting) {
@@ -135,19 +139,32 @@ export default function TransactionForm({
                                 <SelectTrigger aria-invalid={fieldState.invalid}>
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            {category.name}
-                                        </SelectItem>
-                                    ))}
+                                <SelectContent className="max-h-72 overflow-y-auto">
+                                    {categoryTree.map((node) =>
+                                        node.children?.length ? (
+                                            <SelectGroup key={node.id}>
+                                                
+                                                <SelectItem value={node.id} className="font-semibold">
+                                                    {node.name}
+                                                </SelectItem>
+                                                {node.children.map((child) => (
+                                                    <SelectItem key={child.id} value={child.id} className="pl-6">
+                                                        {child.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        ) : (
+                                            <SelectItem key={node.id} value={node.id}>
+                                                {node.name}
+                                            </SelectItem>
+                                        )
+                                    )}
                                 </SelectContent>
                             </Select>
                             {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
                         </Field>
                     )}
                 />
-
                 {/* Cardholder */}
                 <Controller
                     name="user_id"

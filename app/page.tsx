@@ -94,7 +94,7 @@ export default async function Home({ searchParams, }: HomeProps) {
                         {/******************************* Transactions Tab ***********************************/}
                         <TransactionsTab
                             className="p-4 flex flex-col gap-4"
-                            categories={categoryList}
+                            categories={categoriesFull}
                             users={users}
                             accounts={accounts}
                             currentUserId={profile.id}
@@ -105,7 +105,7 @@ export default async function Home({ searchParams, }: HomeProps) {
             <CreateTransactionButton
                 variant="default"
                 size="icon"
-                categories={categoryList}
+                categories={categoriesFull}
                 accounts={accounts}
                 users={users}
                 currentUserId={profile.id}
