@@ -1,9 +1,8 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import TransactionForm from "@/app/transactions/_components/transactionForm";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -35,15 +34,7 @@ export function CreateTransactionButton({
 }: CreateTransactionButtonProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   async function onSubmit(values: CreateTransactionForm) {
     try {
@@ -84,36 +75,14 @@ export function CreateTransactionButton({
         {icon && <Plus className={`h-4 w-4 ${buttonText ? "ml-2" : ""}`} />}
       </Button>
 
-      {isMobile ? (
-        <Drawer open={open} onOpenChange={setOpen} dismissible={false}>
-          <DrawerContent className="flex flex-col h-[92svh]">
-            <DrawerHeader className="shrink-0">
-              <DrawerTitle>Add Transaction</DrawerTitle>
-            </DrawerHeader>
-
-            <div
-              className="overflow-y-auto flex-1 px-4"
-              onFocus={(e) => {
-                const target = e.target as HTMLElement;
-                setTimeout(() => {
-                  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-              }}
-            >
-              {formContent}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      ) : (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="w-full sm:max-w-lg max-h-[90dvh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add Transaction</DialogTitle>
-            </DialogHeader>
-            {formContent}
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-full sm:max-w-lg max-h-[90dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Transaction</DialogTitle>
+          </DialogHeader>
+          {formContent}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
