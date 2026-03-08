@@ -10,7 +10,8 @@ import {
     Transaction,
     Account,
     SmallProfile,
-    CategoryWithSpending
+    CategoryWithSpending,
+    Category
 } from '@/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +34,7 @@ import { useMemo } from 'react';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
-    categories: CategoryWithSpending[];
+    categories: Category[] | CategoryWithSpending[];
     accounts: Account[];
     users: SmallProfile[];
     onSubmit: (data: CreateTransactionForm) => Promise<void>;
