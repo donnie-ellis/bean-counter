@@ -25,7 +25,6 @@ export default function AmountInput({
         <Input
           disabled={isSubmitting}
           inputMode="decimal"
-          pattern="[0-9]*\.?[0-9]*"
           placeholder="$0.00"
           value={displayValue}
           onFocus={(e) => e.target.select()}

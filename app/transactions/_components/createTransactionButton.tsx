@@ -13,7 +13,7 @@ import { insertTransaction } from "@/app/transactions/actions";
 interface CreateTransactionButtonProps {
   className?: string;
   buttonText?: string | null | undefined;
-  size?: "icon" | "default" | "xs" | "sm" | "lg" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined;
+  size?: "default" | "icon" | "sm" | "lg" | "xs" | "icon-xs" | "icon-sm" | "icon-lg" | null | undefined;
   variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
   icon?: boolean;
   categories?: Category[] | CategoryWithSpending[];
@@ -86,20 +86,22 @@ export function CreateTransactionButton({
 
       {isMobile ? (
         <Drawer open={open} onOpenChange={setOpen} dismissible={false}>
-          <DrawerContent>
-            <DrawerHeader>
+          <DrawerContent className="flex flex-col h-[92svh]">
+            <DrawerHeader className="shrink-0">
               <DrawerTitle>Add Transaction</DrawerTitle>
             </DrawerHeader>
-            <div className="overflow-y-auto flex-1 px-4 pb-8">
+
+            <div
+              className="overflow-y-auto flex-1 px-4"
+              onFocus={(e) => {
+                const target = e.target as HTMLElement;
+                setTimeout(() => {
+                  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+              }}
+            >
               {formContent}
             </div>
-            <Button
-              variant="outline"
-              className="mx-4 mb-4"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
           </DrawerContent>
         </Drawer>
       ) : (
