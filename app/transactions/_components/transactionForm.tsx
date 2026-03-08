@@ -10,7 +10,8 @@ import {
     Transaction,
     Account,
     SmallProfile,
-    CategoryList
+    CategoryWithSpending,
+    Category
 } from '@/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
     SelectTrigger,
     SelectValue,
@@ -27,10 +29,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
+import { buildTree } from '@/lib/category';
+import { useMemo } from 'react';
+import AmountInput from './amountInput';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
-    categories: CategoryList;
+    categories: Category[] | CategoryWithSpending[];
     accounts: Account[];
     users: SmallProfile[];
     onSubmit: (data: CreateTransactionForm) => Promise<void>;
@@ -66,6 +71,7 @@ export default function TransactionForm({
             notes: transaction?.notes || null,
         }
     });
+    const categoryTree = useMemo(() => buildTree(categories), [categories]);
 
     const getSubmitButtonText = () => {
         if (isSubmitting) {
@@ -87,10 +93,10 @@ export default function TransactionForm({
 
     return (
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
             {/* Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 {/* Account */}
                 <Controller
@@ -135,19 +141,32 @@ export default function TransactionForm({
                                 <SelectTrigger aria-invalid={fieldState.invalid}>
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                            {category.name}
-                                        </SelectItem>
-                                    ))}
+                                <SelectContent className="max-h-72 overflow-y-auto">
+                                    {categoryTree.map((node) =>
+                                        node.children?.length ? (
+                                            <SelectGroup key={node.id}>
+                                                
+                                                <SelectItem value={node.id} className="font-semibold">
+                                                    {node.name}
+                                                </SelectItem>
+                                                {node.children.map((child) => (
+                                                    <SelectItem key={child.id} value={child.id} className="pl-6">
+                                                        {child.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        ) : (
+                                            <SelectItem key={node.id} value={node.id}>
+                                                {node.name}
+                                            </SelectItem>
+                                        )
+                                    )}
                                 </SelectContent>
                             </Select>
                             {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
                         </Field>
                     )}
                 />
-
                 {/* Cardholder */}
                 <Controller
                     name="user_id"
@@ -229,26 +248,9 @@ export default function TransactionForm({
                     name="amount"
                     control={control}
                     render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Amount</FieldLabel>
-                            <Input
-                                disabled={isSubmitting}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0.00"
-                                value={field.value ?? ''}
-                                onChange={(e) => {
-                                    const value = parseFloat(e.target.value)
-                                    field.onChange(value >= 0 ? value : 0)
-                                }}
-                                aria-invalid={fieldState.invalid}
-                            />
-                            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                        </Field>
+                        <AmountInput field={field} fieldState={fieldState} isSubmitting={isSubmitting} />
                     )}
                 />
-
                 {/* Occurred At */}
                 <Controller
                     name="occurred_at"

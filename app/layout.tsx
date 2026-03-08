@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import MainMenu from "@/components/mainMenu";
 import { getUser } from "@/lib/auth/getUser";
 import { getProfile } from "@/lib/auth/getProfile";
 import { getAccounts } from "@/app/accounts/actions";

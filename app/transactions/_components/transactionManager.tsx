@@ -1,27 +1,27 @@
-// ./app/transactions/_components/transactionManager.tsx
-
 'use client'
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
     CreateTransactionForm,
     Transaction,
     Account,
     SmallProfile,
-    CategoryList
+    CategoryWithSpending,
+    Category
 } from "@/schemas"
 import { deleteTransaction, insertTransaction, updateTransaction } from "@/app/transactions/actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { Plus, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Trash2 } from "lucide-react"
 import TransactionForm from "@/app/transactions/_components/transactionForm"
 import { TransactionsTable, TransactionsTableRef } from "@/app/transactions/_components/transactionsTable"
+import { CreateTransactionButton } from "./createTransactionButton"
 
 interface TransactionManagerProps {
     className?: string
-    categories?: CategoryList
+    categories?: Category[] | CategoryWithSpending[]
     accounts?: Account[]
     users?: SmallProfile[]
     currentUserId?: string
@@ -38,9 +38,17 @@ export default function TransactionManager({
     const [editing, setEditing] = useState<Transaction | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+    const [isMobile, setIsMobile] = useState(false)
 
     const tableRef = useRef<TransactionsTableRef>(null)
-    
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768)
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [])
+
     function openAdd() {
         setEditing(null)
         setOpen(true)
@@ -87,15 +95,37 @@ export default function TransactionManager({
         }
     }
 
+    const formTitle = editing ? "Edit Transaction" : "Add Transaction"
+
+    const formContent = (
+        <TransactionForm
+            transaction={editing}
+            categories={categories}
+            accounts={accounts}
+            users={users}
+            onSubmit={onSubmit}
+            isSubmitting={isSubmitting}
+            isCreate={!editing}
+            currentUserId={currentUserId}
+        />
+    )
+
     return (
         <>
             <main className={className}>
                 <Card className="m-4">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Transactions</CardTitle>
-                        <Button size="sm" variant="secondary" onClick={openAdd}>
-                            <Plus className="h-4 w-4 mr-1" /> Add
-                        </Button>
+                        <CreateTransactionButton
+                            variant={"default"}
+                            size="sm"
+                            categories={categories}
+                            accounts={accounts}
+                            users={users}
+                            currentUserId={currentUserId}
+                            icon={true}
+                            buttonText="Add"
+                        />
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <TransactionsTable
@@ -106,30 +136,30 @@ export default function TransactionManager({
                         />
                     </CardContent>
                 </Card>
-                {/* Implement UI for listing, adding, editing, and deleting transactions */}
             </main>
 
-            {/* Edit form */}
-            <Dialog open={open} onOpenChange={setOpen} >
-                <DialogContent className="sm:max-w-md">
-                    
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editing ? "Edit Transaction" : "Add Transaction"}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <TransactionForm
-                        transaction={editing}
-                        categories={categories}
-                        accounts={accounts}
-                        users={users}
-                        onSubmit={onSubmit}
-                        isSubmitting={isSubmitting}
-                        isCreate={!editing}
-                        currentUserId={currentUserId}
-                    />
-                </DialogContent>
-            </Dialog>
+            {/* Edit form — Drawer on mobile, Dialog on desktop */}
+            {isMobile ? (
+                <Drawer open={open} onOpenChange={setOpen}>
+                    <DrawerContent>
+                        <DrawerHeader>
+                            <DrawerTitle>{formTitle}</DrawerTitle>
+                        </DrawerHeader>
+                        <div className="px-4 pb-6">
+                            {formContent}
+                        </div>
+                    </DrawerContent>
+                </Drawer>
+            ) : (
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>{formTitle}</DialogTitle>
+                        </DialogHeader>
+                        {formContent}
+                    </DialogContent>
+                </Dialog>
+            )}
 
             {/* Delete confirmation dialog */}
             <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
@@ -153,7 +183,6 @@ export default function TransactionManager({
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
         </>
     )
 }
