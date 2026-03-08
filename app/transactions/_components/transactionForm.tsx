@@ -31,6 +31,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { buildTree } from '@/lib/category';
 import { useMemo } from 'react';
+import AmountInput from './amountInput';
 
 interface TransactionFormProps {
     transaction?: Transaction | null;
@@ -247,26 +248,9 @@ export default function TransactionForm({
                     name="amount"
                     control={control}
                     render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Amount</FieldLabel>
-                            <Input
-                                disabled={isSubmitting}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0.00"
-                                value={field.value ?? ''}
-                                onChange={(e) => {
-                                    const value = parseFloat(e.target.value)
-                                    field.onChange(value >= 0 ? value : 0)
-                                }}
-                                aria-invalid={fieldState.invalid}
-                            />
-                            {fieldState.error && <FieldError>{fieldState.error.message}</FieldError>}
-                        </Field>
+                        <AmountInput field={field} fieldState={fieldState} isSubmitting={isSubmitting} />
                     )}
                 />
-
                 {/* Occurred At */}
                 <Controller
                     name="occurred_at"
